@@ -24,9 +24,11 @@ Note that, in the first run, the BERTWeeet and BERT models will be automaticlly 
 
 
 ### Run the code
-In case you meet a jave error, you can run the following command explicitly. To confirm the version first.
 
 > spack load openjdk@11.0.8_10
+
+In case of a jave error, to run the above command. 
+
 
 > python -u main.py --input=4 --input_file=data/2.txt --special_con_t=0.35  --abb_ent_thres=0.3 --context_thres=0.3 --weight=1 --special_ent_t=0.3 --merge_thres=0.5 
  
