@@ -7,9 +7,6 @@ Download the trained [model](https://drive.google.com/file/d/1j4CSF13Uoajcfh1h-y
 
 Note that, in the first run, the BERTWeeet and BERT models will be automaticlly downloaded and cached in the local drive.
 
-### Prepare test data
-To test your own data, 
-We have provided our test data as much as we can. The other data should be requested from the authors of the data. 
 
 
 ### Run the code
