@@ -1,0 +1,881 @@
+access,accs
+air force base,afb
+air national guard base,angb
+airport,aprt
+alley,ally
+alley,aly
+alleyway,alwy
+amble,ambl
+apartments,apts
+approach,apch
+arcade,arc
+arterial,artl
+artery,arty
+avenue,av
+avenue,ave
+back,bk
+banan,ba
+basin,basn
+basin,bsn
+beach,bch
+bend,bend
+bend,bnd
+block,blk
+boardwalk,bwlk
+boulevard,blvd
+boulevard,bvd
+boundary,bdy
+bowl,bl
+brace,br
+brae,br
+brae,brae
+break,brk
+bridge,bdge
+bridge,br
+bridge,brdg
+bridge,bri
+broadway,b'way
+broadway,bdwy
+broadway,bway
+broadway,bwy
+brook,brk
+brow,brow
+brow,brw
+building,bldg
+buildings,bldgs
+buildings,bldngs
+bypass,bps
+bypass,byp
+bypass,bypa
+byway,bywy
+caravan,cvn
+causeway,c'way
+causeway,caus
+causeway,cswy
+causeway,cway
+center,cen
+center,ctr
+central,ctrl
+centre,cen
+centre,ctr
+centreway,cnwy
+chase,ch
+church,ch
+circle,cir
+circuit,cct
+circuit,ci
+circus,crc
+circus,crcs
+city,cty
+close,cl
+common,cmn
+common,comm
+community,comm
+concourse,cnc
+concourse,con
+copse,cps
+corner,cnr
+corner,crn
+corso,cso
+cottage,cott
+cottages,cotts
+county,co
+county road,cr
+county route,cr
+court,crt
+court,ct
+courtyard,ctyd
+courtyard,cyd
+cove,cov
+cove,cove
+cove,cv
+creek,ck
+creek,cr
+creek,crk
+crescent,cr
+crescent,cres
+crest,crst
+crest,cst
+croft,cft
+cross,crss
+cross,cs
+crossing,crsg
+crossing,csg
+crossing,xing
+crossroad,crd
+crossway,cowy
+cul-de-sac,cds
+cul-de-sac,csac
+curve,cve
+cutting,cutt
+dale,dale
+dale,dle
+deviation,devn
+dip,dip
+distributor,dstr
+down,dn
+downs,dn
+drive,dr
+drive,drv
+drive,dv
+driveway,drwy
+driveway,dvwy
+driveway,dwy
+east,e
+edge,edg
+edge,edge
+elbow,elb
+end,end
+entrance,ent
+estate,est
+expressway,exp
+expressway,expwy
+expressway,expy
+expressway,xway
+extension,ex
+fairway,fawy
+fairway,fy
+father,fr
+ferry,fy
+field,fd
+fire track,ftrk
+firetrail,fit
+flat,fl
+flat,flat
+follow,folw
+footway,ftwy
+foreshore,fshr
+formation,form
+freeway,frwy
+freeway,fwy
+front,frnt
+frontage,fr
+frontage,frtg
+gap,gap
+garden,gdn
+gardens,gdn
+gardens,gdns
+gate,ga
+gate,gte
+gates,ga
+gates,gte
+gateway,gwy
+george,geo
+glade,gl
+glade,gld
+glade,glde
+glen,glen
+glen,gln
+grange,gra
+green,gn
+green,grn
+ground,grnd
+grove,gr
+grove,gro
+grovet,gr
+gully,gly
+harbor,hbr
+harbour,hbr
+haven,hvn
+head,hd
+heads,hd
+heights,hgts
+heights,ht
+heights,hts
+high school,hs
+highroad,hird
+highroad,hrd
+highway,hwy
+hill,hl
+hills,hl
+hills,hls
+hospital,hosp
+house,ho
+house,hse
+industrial,ind
+interchange,intg
+international,intl
+junction,jctn
+junction,jnc
+junior,jr
+key,key
+lagoon,lgn
+lakes,l
+landing,ldg
+lane,la
+lane,ln
+laneway,lnwy
+line,ln
+link,link
+link,lk
+little,lit
+little,lt
+lodge,ldg
+lookout,lkt
+loop,lp
+lower,lr
+lower,lwr
+mall,ml
+manor,mnr
+mansions,mans
+market,mkt
+mead,md
+meadow,mdw
+meadows,mdw
+meadows,mdws
+meander,mdr
+meander,mndr
+meander,mr
+medical,med
+memorial,mem
+mews,mews
+mews,mw
+middle,mid
+middle school,ms
+mile,mi
+military,mil
+motorway,mtwy
+motorway,mwy
+mount,mt
+mountain,mtn
+mountains,mtn
+municipal,mun
+museum,mus
+national park,np
+national recreation area,nra
+national wildlife refuge area,nwra
+nook,nk
+nook,nook
+north,n
+northeast,ne
+northwest,nw
+outlook,otlk
+outlook,out
+parade,pde
+paradise,pdse
+park,park
+park,pk
+parklands,pkld
+parkway,pkwy
+parkway,pky
+parkway,pwy
+pass,pass
+pass,ps
+passage,psge
+path,path
+pathway,phwy
+pathway,pway
+pathway,pwy
+piazza,piaz
+pike,pk
+place,pl
+plain,pl
+plains,pl
+plateau,plat
+plaza,pl
+plaza,plz
+plaza,plza
+pocket,pkt
+point,pnt
+point,pt
+port,port
+port,pt
+post office,po
+precinct,pct
+promenade,prm
+promenade,prom
+quad,quad
+quadrangle,qdgl
+quadrant,qd
+quadrant,qdrt
+quay,qy
+quays,qy
+quays,qys
+ramble,ra
+ramble,rmbl
+range,rge
+range,rnge
+reach,rch
+reservation,res
+reserve,res
+reservoir,res
+rest,rest
+rest,rst
+retreat,rt
+retreat,rtt
+return,rtn
+ridge,rdg
+ridge,rdge
+ridgeway,rgwy
+right of way,rowy
+rise,ri
+river,r
+river,riv
+river,rvr
+riverway,rvwy
+riviera,rvra
+road,rd
+roads,rds
+roadside,rdsd
+roadway,rdwy
+roadway,rdy
+robert,robt
+rocks,rks
+ronde,rnde
+rosebowl,rsbl
+rotary,rty
+round,rnd
+route,rt
+route,rte
+rue,rue
+run,run
+saint,st
+saints,ss
+senior,sr
+serviceway,svwy
+serviceway,swy
+shunt,shun
+siding,sdng
+sister,sr
+slope,slpe
+sound,snd
+south,s
+south,sth
+southeast,se
+southwest,sw
+spur,spur
+square,sq
+stairway,strwy
+state highway,sh
+state highway,shwy
+state route,sr
+station,sta
+station,stn
+strand,sd
+strand,stra
+street,st
+strip,strp
+subway,sbwy
+tarn,tarn
+tarn,tn
+terminal,term
+terrace,tce
+terrace,ter
+terrace,terr
+thoroughfare,thfr
+thoroughfare,thor
+tollway,tlwy
+tollway,twy
+top,top
+tor,tor
+tower,twr
+towers,twrs
+township,twp
+trace,trce
+track,tr
+track,trk
+trail,trl
+trailer,trlr
+triangle,tri
+trunkway,tkwy
+tunnel,tun
+turn,tn
+turn,trn
+turn,turn
+turnpike,tpk
+turnpike,tpke
+underpass,upas
+underpass,ups
+university,uni
+university,univ
+upper,upr
+vale,va
+vale,vale
+valley,vy
+vazhi,way
+viaduct,vdct
+viaduct,via
+viaduct,viad
+view,view
+view,vw
+village,vill
+villas,vlls
+vista,vst
+vista,vsta
+walk,walk
+walk,wk
+walk,wlk
+walkway,wkwy
+walkway,wky
+waters,wtr
+way,way
+way,wy
+west,w
+wharf,whrf
+william,wm
+wynd,wyn
+wynd,wynd
+yard,yd
+university,univer
+vermont,vt
+massachusetts,ma
+new york,ny
+maine,me
+new hampshire,nh
+new brunswick,nb
+texas,tx
+illinois,il
+missouri,mo
+kansas,ks
+oklahoma,ok
+arkansas,ar
+iowa,ia
+south dakota,sd
+north dakota,nd
+kentucky,ky
+indiana,in
+tennessee,tn
+mississippi,ms
+alabama,al
+georgia,ga
+colorado,co
+wyoming,wy
+utah,ut
+new mexico,nm
+arizona,az
+florida,fl
+ohio,oh
+west virginia,wv
+district of columbia,dc
+pennsylvania,pa
+delaware,de
+maryland,md
+montana,mt
+idaho,id
+wisconsin,wi
+minnesota,mn
+nevada,nv
+california,ca
+oregon,or
+washington,wa
+michigan,mi
+connecticut,ct
+hawaii,hi
+south carolina,sc
+virginia,va
+north carolina,nc
+louisiana,la
+new jersey,nj
+rhode island,ri
+alaska,ak
+tamil nadu,tn
+puducherry,py
+himachal pradesh,hp
+sikkim,sk
+delhi,dl
+uttar pradesh,up
+haryana,hr
+punjab,pb
+chandigarh,ch
+rajasthan,rj
+jammu and kashmir,jk
+gujarat,gj
+madhya pradesh,mp
+maharashtra,mh
+bihar,br
+west bengal,wb
+jharkhand,jh
+chhattisgarh,ct
+odisha,or
+kerala,kl
+karnataka,ka
+andhra pradesh,ap
+andaman and nicobar islands,an
+assam,as
+tripura,tr
+arunachal pradesh,ar
+lakshadweep,ld
+meghalaya,ml
+manipur,mn
+nagaland,nl
+mizoram,mz
+telangana,tg
+united states,us
+india,in
+cocos (keeling) islands,cc
+christmas island,cx
+heard island and mcdonald islands,himi
+new south wales,nsw
+northern territory,nt
+queensland,qld
+south australia,sa
+western australia,wa
+victoria,vic
+australian capital territory,act
+jervis bay territory,jbt
+tasmania,tas
+vermont,vt
+massachusetts,ma
+new york,ny
+maine,me
+new hampshire,nh
+new brunswick,nb
+texas,tx
+illinois,il
+missouri,mo
+kansas,ks
+oklahoma,ok
+arkansas,ar
+iowa,ia
+south dakota,sd
+north dakota,nd
+kentucky,ky
+indiana,in
+tennessee,tn
+mississippi,ms
+alabama,al
+georgia,ga
+colorado,co
+wyoming,wy
+utah,ut
+new mexico,nm
+arizona,az
+florida,fl
+ohio,oh
+west virginia,wv
+"washington, d.c.",dc
+pennsylvania,pa
+delaware,de
+maryland,md
+montana,mt
+idaho,id
+wisconsin,wi
+minnesota,mn
+nevada,nv
+california,ca
+oregon,or
+washington,wa
+michigan,mi
+connecticut,ct
+hawaii,hi
+south carolina,sc
+virginia,va
+north carolina,nc
+louisiana,la
+new jersey,nj
+rhode island,ri
+alaska,ak
+wellington,wgn
+manawatu-whanganui,mwt
+west coast,wtc
+canterbury,can
+otago,ota
+southland,stl
+hawke's bay,hkb
+taranaki,tki
+bay of plenty,bop
+auckland,auk
+waikato,wko
+northland,ntl
+gisborne,gis
+chatham islands,cit
+nelson,nsn
+marlborough,mbh
+tasman,tas
+tamil nadu,tn
+puducherry,py
+himachal pradesh,hp
+sikkim,sk
+delhi,dl
+uttar pradesh,up
+haryana,hr
+punjab,pb
+chandigarh,ch
+rajasthan,rj
+jammu and kashmir,jk
+gujarat,gj
+madhya pradesh,mp
+maharashtra,mh
+bihar,br
+west bengal,wb
+jharkhand,jh
+chhattisgarh,ct
+odisha,or
+kerala,kl
+karnataka,ka
+andhra pradesh,ap
+andaman and nicobar islands,an
+assam,as
+tripura,tr
+arunachal pradesh,ar
+lakshadweep,ld
+meghalaya,ml
+manipur,mn
+nagaland,nl
+mizoram,mz
+telangana,tg
+quebec,qc
+maine,me
+ontario,on
+new brunswick,nb
+nova scotia,ns
+nunavut,nu
+manitoba,mb
+british columbia,bc
+prince edward island,pe
+saskatchewan,sk
+alberta,ab
+newfoundland and labrador,nl
+northwest territories,nt
+yukon,yt
+wellington,wgn
+manawatu-whanganui,mwt
+west coast,wtc
+canterbury,can
+otago,ota
+southland,stl
+hawke's bay,hkb
+taranaki,tki
+bay of plenty,bop
+auckland,auk
+waikato,wko
+northland,ntl
+gisborne,gis
+chatham islands,cit
+nelson,nsn
+marlborough,mbh
+tasman,tas
+andorra,ad
+afghanistan,af
+antigua and barbuda,ag
+albania,al
+armenia,am
+angola,ao
+chile,cl
+argentina,ar
+austria,at
+australia,au
+azerbaijan,az
+barbados,bb
+bangladesh,bd
+belgium,be
+belgium (land mass),be
+burkina faso,bf
+bulgaria,bg
+bahrain,bh
+burundi,bi
+benin,bj
+brunei,bn
+brazil,br
+bolivia,bo
+brazil,br
+bolivia,bo
+argentina,ar
+the bahamas,bs
+bhutan,bt
+botswana,bw
+belarus,by
+belize,bz
+united states,us
+canada,ca
+greenland,gl
+democratic republic of the congo,cd
+congo-brazzaville,cg
+chile,cl
+argentina,ar
+cameroon,cm
+china,cn
+colombia,co
+costa rica,cr
+cuba,cu
+cape verde,cv
+cyprus,cy
+czechia,cz
+germany,de
+federal republic of germany (land mass),de
+luxembourg,lu
+netherlands,nl
+djibouti,dj
+denmark,dk
+dominican republic,do
+dominican republic,do
+ecuador,ec
+estonia,ee
+egypt,eg
+eritrea,er
+ethiopia,et
+finland,fi
+fiji,fj
+france (land mass),fr
+italy,it
+france,fr
+gabon,ga
+ghana,gh
+togo,tg
+the gambia,gm
+guinea,gn
+turkey,tr
+greece,gr
+guatemala,gt
+haiti,ht
+guinea-bissau,gw
+guyana,gy
+honduras,hn
+hungary,hu
+indonesia,id
+ireland,ie
+israel,il
+india,in
+iraq,iq
+iran,ir
+iceland,is
+italy,it
+france,fr
+jamaica,jm
+jordan,jo
+japan,jp
+kenya,ke
+kyrgyzstan,kg
+kiribati,ki
+north korea,kp
+south korea,kr
+kuwait,kw
+lebanon,lb
+liechtenstein,li
+liberia,lr
+lesotho,ls
+lithuania,lt
+lithuania (land mass),lt
+germany,de
+federal republic of germany (land mass),de
+luxembourg,lu
+latvia,lv
+libya,ly
+madagascar,mg
+marshall islands,mh
+north macedonia,mk
+mali,ml
+myanmar,mm
+mongolia,mn
+mauritania,mr
+malta,mt
+mauritius,mu
+maldives,mv
+malawi,mw
+mexico,mx
+malaysia,my
+mozambique,mz
+namibia,na
+nigeria,ng
+nicaragua,ni
+germany,de
+netherlands,nl
+norway,no
+nepal,np
+nauru,nr
+new zealand,nz
+oman,om
+panama,pa
+peru,pe
+papua new guinea,pg
+philippines,ph
+pakistan,pk
+poland,pl
+portugal,pt
+palau,pw
+paraguay,py
+qatar,qa
+qatar (land mass),qa
+romania,ro
+russia,ru
+ukraine,ua
+russia (land mass),ru
+rwanda,rw
+saudi arabia,sa
+solomon islands,sb
+seychelles,sc
+sudan,sd
+south sudan,ss
+singapore,sg
+croatia,hr
+slovenia,si
+slovakia,sk
+sierra leone,sl
+san marino,sm
+senegal,sn
+somalia,so
+suriname,sr
+syria,sy
+ghana,gh
+togo,tg
+thailand,th
+tajikistan,tj
+turkmenistan,tm
+tunisia,tn
+tonga,to
+turkey,tr
+greece,gr
+trinidad and tobago,tt
+tuvalu,tv
+tanzania,tz
+russia,ru
+ukraine,ua
+uganda,ug
+united states,us
+canada,ca
+uruguay,uy
+uzbekistan,uz
+vatican city,va
+venezuela,ve
+vietnam,vn
+vanuatu,vu
+yemen,ye
+zambia,zm
+zimbabwe,zw
+algeria,dz
+bosnia and herzegovina,ba
+cambodia,kh
+central african republic,cf
+chad,td
+comoros,km
+croatia,hr
+slovenia,si
+slovenia (land mass),si
+serbia,rs
+east timor,tl
+el salvador,sv
+equatorial guinea,gq
+grenada,gd
+kazakhstan,kz
+laos,la
+federated states of micronesia,fm
+moldova,md
+monaco,mc
+monaco,mc
+montenegro,me
+morocco,ma
+saint kitts and nevis,kn
+saint lucia,lc
+saint vincent and the grenadines,vc
+samoa,ws
+croatia,hr
+serbia,rs
+kosovo,xk
+south africa,za
+south africa (land mass),za
+spain,es
+france,fr
+sri lanka,lk
+eswatini,sz
+switzerland,ch
+united kingdom,gb
+taiwan,tw
+serbia,rs
+kosovo,xk
+united kingdom,uk
+united states,usa
+new york city,nyc
+southbound,sb
+northbound,nb
+eastbound,eb
+westbound,wb
