@@ -13,10 +13,12 @@ We have provided our test data as much as we can. The other data should be reque
 
 
 ### Run the code
+In case you meet a jave error, you can run the following command explicitly. To confirm the version first.
 
 > spack load openjdk@11.0.8_10
+
 > python -u main.py --input=4 --input_file=data/2.txt --special_con_t=0.35  --abb_ent_thres=0.3 --context_thres=0.3 --weight=1 --special_ent_t=0.3 --merge_thres=0.5 
-> 
+ 
 Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
 
 Test our annotated data: Set <*input*> to 4, then you will get the result of partial datasets since some are not publicly available and should be requested from the authors of the data.
@@ -29,7 +31,7 @@ Test our unannotated data: Set <*input*> to 6,7,8,9,10,11,12,13,and 14. This is 
 
 [10-14] correspons to COVID-19 dataset
 
-The other parameters are the probability threshold used in our approach. You can just keep the default value.
+The other parameters are the probability thresholds used in our approach. You can just keep the default value.
 
 
 ## Result
