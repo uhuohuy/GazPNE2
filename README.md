@@ -5,7 +5,7 @@ We present a robust and general place name extractor for English tweets, GazPNE2
 ### Prepare model data
 Download the trained [model](https://drive.google.com/file/d/1j4CSF13Uoajcfh1h-yBuvVXo_-rub05o/view?usp=sharing) and unzip the data into the _model_ folder.
 
-Note that, in the first run, the BERTWeeet and BERT models will be automaticlly downloaded and cached in the local drive.
+Note that, in the first run, the BERTWeeet and BERT models will be automaticlly downloaded and cached on your local drive.
 
 
 
