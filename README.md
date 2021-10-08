@@ -31,8 +31,11 @@ Test our unannotated data: Set <*input*> to 6,7,8,9,10,11,12,13,and 14. This is 
 The other parameters are the probability thresholds used in our approach. You can just keep the default value.
 
 ## Test Data
-The data we used to evaluate our approach is as follows:
-[florence_result.txt](figure/data.png)
+The data we used to evaluate our approach is as follows:#
+<p align="center">
+<a href="url">
+ <img src="figure/data.png" height="700" width="550" ></a>
+</p>
 
 ## Result
 <p align="center">
