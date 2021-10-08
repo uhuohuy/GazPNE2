@@ -32,6 +32,9 @@ In case you meet a jave error, you can run the following command explicitly. To 
 Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
 
 Test our annotated data: Set <*input*> to 4, then you will get the result of partial datasets since some are not publicly available and should be requested from the authors of the data.
+datasets [a,b,c]  can be obtained from (https://rebrand.ly/LocationsDataset).
+datasets [e,f] can be obtained from (https://revealproject.eu/geoparse-benchmark-open-dataset/).
+datasets [g,h] can be obtained by contacting the [author] (https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
 
 Test our unannotated data: Set <*input*> to 6,7,8,9,10,11,12,13,and 14. This is because the datasets are too lareg and they are divided into multiple groups.
 
