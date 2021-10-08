@@ -36,12 +36,12 @@ datasets [a,b,c]  can be obtained from https://rebrand.ly/LocationsDataset.
 datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-open-dataset/.
 datasets [g,h] can be obtained by contacting the [author](https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
 
-Test our unannotated data: Set <*input*> to 6,7,8,9,10,11,12,13,and 14. This is because the datasets are too lareg and they are divided into multiple groups.
+Test our unannotated data: Set <*input*> to 6,7,8,9,10,11,12,13, or 14. This is because the datasets are too large and they are thus divided into multiple groups.
 
-[6] correspons to CrisisNLP
+[6] correspond to CrisisNLP
 
-[7-9] correspons to HumAID dataset
+[7-9] correspond to HumAID dataset
 
-[10-14] correspons to COVID-19 dataset
+[10-14] correspond to COVID-19 dataset
 
 The other parameters are the probability thresholds used in our approach. You can just keep the default value.
