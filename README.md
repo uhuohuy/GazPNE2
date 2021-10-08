@@ -34,7 +34,7 @@ The other parameters are the probability thresholds used in our approach. You ca
 The data we used to evaluate our approach is as follows:#
 <p align="center">
 <a href="url">
- <img src="figure/data.png" height="700" width="550" ></a>
+ <img src="figure/data.png" width="700" height="470" ></a>
 </p>
 
 ## Result
