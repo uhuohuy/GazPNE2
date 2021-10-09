@@ -25,13 +25,12 @@ Note that, in the first run, the BERTWeeet and BERT models will be automaticlly 
 
 ### Run the code
 
-> spack load openjdk@11.0.8_10
-
-In case of a jave error, to run the above command. 
-
 
 > python -u main.py --input=4 --input_file=data/test.txt --special_con_t=0.35  --abb_ent_thres=0.3 --context_thres=0.3 --special_ent_t=0.3 --merge_thres=0.5 --abb_context_thres=0.2 --num_context_thres=0.2 --single_person_c_t=0.23
- 
+
+> spack load openjdk@11.0.8_10
+
+To execute the above command in case of a jave error.  
  
 Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
 
