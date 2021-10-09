@@ -26,7 +26,7 @@ Note that, in the first run, the BERTWeeet and BERT models will be automaticlly 
 ### Run the code
 
 
-> python -u main.py --input=4 --input_file=data/test.txt --special_con_t=0.35  --abb_ent_thres=0.3 --context_thres=0.3 --special_ent_t=0.3 --merge_thres=0.5 --abb_context_thres=0.2 --num_context_thres=0.2 --single_person_c_t=0.23
+> python -u main.py --input=4 --input_file=data/test.txt
 
 > spack load openjdk@11.0.8_10
 
@@ -39,5 +39,3 @@ datasets [a,b,c]  can be obtained from https://rebrand.ly/LocationsDataset.
 datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-open-dataset/.
 datasets [g,h] can be obtained by contacting the [author](https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
 
-
-The other parameters are the probability thresholds used in our approach. You can just keep the default value.
