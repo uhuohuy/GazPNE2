@@ -18,7 +18,6 @@ MODEL_PATH ='bert-large-cased'
 #            common_descs[line.strip()] = 1
 ##    print("Common descs for filtering read:",len(common_descs))
 #    return common_descs
-map_labels_file = 'data/map_labels.txt'
 
 
 def read_ent_file(ent_file):
@@ -52,7 +51,7 @@ class UnsupNER:
         self.Word_Entities = read_ent_file('data/word_ent'+str(neigh)+'w'+str(weight)+'.txt')   # word_ent100_pure.txt
         self.Word_Entities_C = self.Word_Entities #dist_v2.read_ent_file('data/word_ent'+str(context_neigh)+'w'+str(weight)+'.txt')   # word_ent100_pure.txt
 
-    def context_cue_new(self, masked_sent, bool_tweet_bert=0, ent=[],  ori_masked_sen = ''):
+    def context_cue_new(self, masked_sent, bool_tweet_bert=0, ent=[],  ori_masked_sen = '', bool_debug=0):
         ent_prob = {}
         ent_prob['LOC'] = 0
         ent_prob_gen = {}
@@ -102,8 +101,8 @@ class UnsupNER:
 #                    start_time = time.time()
                     descs, desc_probs = self.desc_singleton.punct_sentence_simple(masked_sent)
 #                    print(bool_tweet_bert, 'punct_sentence_simple2: ', time.time()-start_time)
-
-        print(descs)
+        if bool_debug:
+            print(descs)
       
         sum_pro = 0
         sum_pro_gen = 0

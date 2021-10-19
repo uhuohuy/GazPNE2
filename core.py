@@ -523,5 +523,6 @@ if __name__== "__main__":
                 new_abv += char + '.'
         abv_punk[new_abv]=key
     String = "RT @GlobalGrind: The Most Uplifting Pictures's From The Boston Marathon Twin Bombings http://t.co/my6JSr0q44\\NY&lt;3 B http://t.co/9eO8vnsWDq"
+    String='Packed beaches   in MA = 2nd wave of Covid-19 should start in about 2 weeks in Massachusetts...'
     sub_output,sub_off_set,return_query_tokens, hashtag_offsets,dis_split = extract_sim(String,[], 1, abv_punk)
     print(sub_output,sub_off_set, return_query_tokens, hashtag_offsets,dis_split)

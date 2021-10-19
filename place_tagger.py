@@ -17,7 +17,7 @@ from BertEmbeds import BertEmbeds
 from utility import load_osm_names_fre
 import os
 import torch.nn.functional as F
-
+import demoji
 WORD_POS = 0
 TAG_POS = 1
 noun_tags_tweet = ['N','$','^','A', 'O','G'] #'P',
@@ -260,15 +260,6 @@ def load_word_index(index_file):
     return word2idx, max_char_len
 
 '''load the bigram model from file'''
-def load_bigram_model(bigram_file):
-    bigram_model = {}
-
-    with open(bigram_file, 'rb') as f:
-        for l in f:
-            line = l.decode().split()
-            if len(line) == 3:
-                bigram_model[(line[0],line[1])] = float(line[2])
-    return bigram_model
 
 ''' get the embedding of a sentence  '''
 def sentence_embeding(sentence, trained_emb, word_idx,glove_emb,osm_emb,\
@@ -364,64 +355,57 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
 #        ignored_places = ignored_place_named[region]
 #    else:
 #        ignored_places = []
-    raw_data_dir = 'data/webis-incidents-26-12-20'
+    raw_data_dir = 'data/events_set'
+#    raw_data_dir = ''
     target_dir = []
     if region==1:
-        t_json_file = "data/houston_floods_2016_annotations.json"#"data/raw_tweet.txt"
+        t_json_file = "data/test_data/houston_floods_2016_annotations.json"#"data/raw_tweet.txt"
     elif region==2:
-        t_json_file = "data/chennai_floods_2015_annotations.json"#"
+        t_json_file = "data/test_data/chennai_floods_2015_annotations.json"#"
     elif region==0:
-        t_json_file = "data/louisiana_floods_2016_annotations.json"#"
+        t_json_file = "data/test_data/louisiana_floods_2016_annotations.json"#"
     elif region==6:
-        t_json_file = "data/benchmark_ny_annotated.json"#"
+        t_json_file = "data/test_data/benchmark_ny_annotated.json"#"
     elif region==7:
-        t_json_file = "data/benchmark_nz_annotated.json"#"
+        t_json_file = "data/test_data/benchmark_nz_annotated.json"#"
     elif region==8:
-        t_json_file = "data/geocorpora_total.json"#"
+        t_json_file = "data/test_data/geocorpora_total.json"#"
     elif region==9:
-        t_json_file = "data/b.json"#"
+        t_json_file = "data/test_data/b.json"#"
     elif region==10:
-        t_json_file = "data/e.json"#"
+        t_json_file = "data/test_data/e.json"#"
     elif region==11:
-        t_json_file = "data/f.json"#"
+        t_json_file = "data/test_data/f.json"#"
     elif region==12:
-        t_json_file = "data/g.json"#"
+        t_json_file = "data/test_data/g.json"#"
     elif region==13:
-        t_json_file = "data/h.json"#"
+        t_json_file = "data/test_data/h.json"#"
     elif region==14:
-        t_json_file = "data/a.json"#"
+        t_json_file = "data/test_data/a.json"#"
     elif region==15:
-        t_json_file = "data/HarveyTweet2017.json"#"
-    elif region==16:
-        t_json_file = "data/microposts2016-neel-test_neel.json"#"
+        t_json_file = "data/test_data/HarveyTweet2017.json"#"
     elif region==17:
-        t_json_file = "data/microposts2016-neel-training_neel.json"#"
-    elif region==18:
-        t_json_file = "data/test.json"#"
-    elif region==19:
-        t_json_file = "data/dev.json"#"
+        t_json_file = "data/test_data/microposts2016-neel-training_neel.json"#"
     elif region==20:
-        t_json_file = "data/train.json"#"
+        t_json_file = "data/test_data/train.json"#"
     elif region==21:
-        t_json_file = "data/ritter_ner.json"#"
-    elif region==22:
-        t_json_file = "data/2016.json"#"
-    elif region==23:
-        t_json_file = "data/2017.json"#"
-    elif region==24:
-        t_json_file = "data/2018.json"#"
+        t_json_file = "data/test_data/ritter_ner.json"#"
     elif region==25:
-        t_json_file = "data/tweet_dataset_I.json"#"
+        t_json_file = "data/test_data/tweet_dataset_I.json"#"
     elif region==26:
-        t_json_file = "data/tweet_dataset_II.json"#"
-    elif region==27:
-        t_json_file = "data/msm2013test.json"#"
+        t_json_file = "data/test_data/tweet_dataset_II.json"#"
     elif region==28:
-        t_json_file = "data/msm2013train.json"#"
+        t_json_file = "data/test_data/msm2013train.json"#"
+    elif region==30:
+        t_json_file = "data/test_data/humaid.json"#"
+    elif region==31:
+        t_json_file = "data/test_data/crisisbench.json"#"
+    elif region==32:
+        t_json_file = "data/test_data/corona.json"#"
 
-    elif region == 4:
-        dir_list = [os.path.join(raw_data_dir, o) for o in os.listdir(raw_data_dir) 
-                        if os.path.isdir(os.path.join(raw_data_dir,o))]
+#    elif region == 4:
+#        dir_list = [os.path.join(raw_data_dir, o) for o in os.listdir(raw_data_dir) 
+#                        if os.path.isdir(os.path.join(raw_data_dir,o))]
     elif region == 50:
         raw_data_dir = 'data/events_set'
     elif region == 51:
@@ -525,8 +509,10 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
                 tweet_cache[key]=[[], [],sentences,offsets,full_offset,sentences_lowcases,tweet,hashtag_offsets,dis_split, [], []]
     else:
         with open(t_json_file) as json_file:
+            js_data = json.load(json_file)
             for key in js_data.keys():
                 tweet = js_data[key]['text']
+                tweet = demoji.replace(tweet,  " ") 
                 place_names = []
                 place_offset = []
                 amb_place_names = []
@@ -598,7 +584,7 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
                 tag_lists.append(temp_offset)
             temp_tags[key]= tag_lists
             valid_keys.append(key)
-        index += 1
+            index += 1
     return tweet_cache, valid_keys, temp_tags,total_tweet_count
 
 def create_result(key, p_type, place,pos, cur_off_pla,ent_prob,context_ent_prob,ent_prob_gen,context_ent_prob_gen,\
@@ -661,21 +647,21 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
              ent_thres=0.3, context_thres=0.2,  weight=1, \
              bool_fast = 0, special_ent_t = 0.4, \
              general_words=[],abv_punk={}, merge_thres=0.4, \
-            fc_tokens=[],fc_ratio=0.4, input_file='data/test.txt'):
+            fc_tokens=[],fc_ratio=0.4, input_file='data/test.txt',abb_context_thres=0.2, num_context_thres=0.2, single_person_c_t=0.2, bool_debug=1):
     fc_tokens = [item for item in fc_tokens if item not in category_words_simple]
     postive_pro_t = thres
     PAD_idx = 0
     s_max_len = 10
     bool_mb_gaze = osm_word_emb
-    gazetteer_emb_file = 'data/osm_vector'+str(osmembed)+'.txt'
     bigram_file = 'model/'+model_ID+'-bigram.txt'
     hcfeat_file = 'model/'+model_ID+'-hcfeat.txt'
-    START_WORD = 'start_string_taghu'
-    start_time = time.time()
+    START_WORD = 'start_string_taghu' # 'huuu'
+#    start_time = time.time()
     bigram_model = load_bigram_model(bigram_file)
-    print('load_bigram_model', time.time()-start_time)
+#    print('load_bigram_model', time.time()-start_time)
     bool_special_check = 1
     if bool_mb_gaze:
+        gazetteer_emb_file = 'data/osm_vector'+str(osmembed)+'.txt'
         gazetteer_emb,gaz_emb_dim = load_embeding(gazetteer_emb_file)
     else:
         gazetteer_emb = []
@@ -687,25 +673,29 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
     truth_all = []
     file_name = 'data/osm_abbreviations_globe.csv'
     abbr_dict = abbrevison1(file_name)
-    start_time = time.time()
+#    start_time = time.time()
 
     char_hc_emb,_ = load_embeding(hcfeat_file)
-    print('hcfeat_file', time.time()-start_time)
-    start_time = time.time()
+#    print('hcfeat_file', time.time()-start_time)
+#    start_time = time.time()
 
     word_idx_file = 'model/'+model_ID+'-vocab.txt'
     word2idx, max_char_len = load_word_index(word_idx_file)
-    print('load_word_index', time.time()-start_time)
-    start_time = time.time()
+#    print('load_word_index', time.time()-start_time)
+#    start_time = time.time()
 
     max_char_len = 20
     if emb==4:
-        BertEmbed = BertEmbeds('data/uncased_vocab.txt', 'data/uncased_bert_vectors.txt')
-        glove_emb, emb_dim = BertEmbed.load_bert_embedding()
+#        BertEmbed = BertEmbeds('data/uncased_vocab.txt', 'data/uncased_bert_vectors.txt')
+#        glove_emb, emb_dim = BertEmbed.load_bert_embedding()
+        glove_emb = {}    
+        emb_dim = 1024
     else:
-        glove_emb_file = 'data/glove.6B.50d.txt'
-        glove_emb, emb_dim = load_embeding(glove_emb_file)
-    print('load_embeding', time.time()-start_time)
+#        glove_emb_file = 'data/glove.6B.50d.txt'
+#        glove_emb, emb_dim = load_embeding(glove_emb_file)
+        glove_emb = {}    
+        emb_dim = 50
+#    print('load_embeding', time.time()-start_time)
 
     weight_l = emb_dim+gaz_emb_dim+6
     weights_matrix = np.zeros((len(word2idx.keys()), weight_l))
@@ -716,12 +706,12 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
     DROPOUT = 0.5
     flex_feat_len = 3
     fileter_l = filter_l
-    start_time = time.time()
+#    start_time = time.time()
 
     model = C_LSTM(weights_matrix, HIDDEN_DIM, fileter_l, lstm_dim, len(tag_to_ix), flex_feat_len, DROPOUT)
     model.load_state_dict(torch.load(model_path,map_location='cpu'))
     model.eval()
-    print('load_state_dict', time.time()-start_time)
+#    print('load_state_dict', time.time()-start_time)
 
     np_word_embeds = model.embedding.weight.detach().numpy() 
     index_t = 0
@@ -792,7 +782,9 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                 print('#'*50)
                 print(str(tweet_count)+'-th tweet' )
                 print(tweet)
-                print(place_names)
+                print('ground true', place_names)
+                print('ground true', place_offset)
+
             new_full_offset = lowerize(offsets, full_offset, tag_lists)
             save_file.write('#'*50)
             save_file.write('\n')
@@ -913,14 +905,17 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                             # estimate extrinsic probability    
                             cur_off_pla = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
                             masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, pos_lists[i])
-    #                            print(masked_context_sentence)
-                            context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen)
+                            if bool_debug:
+                                print(masked_context_sentence)
+                            context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug)
                             context_ent_prob = pure_ent(context_ent_prob)
-                            print('context_ent_prob', context_ent_prob)
+                            if bool_debug:
+                                print(all_sub_lists[i])
+                                print('context_ent_prob', context_ent_prob)
                             if not weight:
                                 context_ent_prob = context_ent_prob_gen
                             
-                            bool_detected = fusion_strategy29({'LOC':0},context_ent_prob, ent_thres, context_thres, all_sub_lists[i], abbr_dict.keys(), bool_general, pos_lists[i], merge_thres=merge_thres)
+                            bool_detected = fusion_strategy29({'LOC':0},context_ent_prob, ent_thres, context_thres, all_sub_lists[i], abbr_dict.keys(), bool_general, pos_lists[i], abb_context_thres, merge_thres,num_context_thres, single_person_c_t)
                            
                             contain_number = 0
                             for item in all_sub_lists[i]:
@@ -929,26 +924,23 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                     break
                             ent_prob = {}
                             if (not bool_fast) or( not bool_detected and not contain_number):
-                                print(masked_sentence)
+                                if bool_debug:
+                                    print(masked_sentence)
                                 if masked_sentence in bert_cache.keys():
                                     ent_prob = bert_cache[masked_sentence][0]
                                     ent_prob_gen = bert_cache[masked_sentence][1]
                                 else:
-                                    ent_prob, ent_prob_gen ,descs = obj.context_cue_new(masked_sentence,0,cap_sen, ori_masked_sen)
+                                    ent_prob, ent_prob_gen ,descs = obj.context_cue_new(masked_sentence,0,cap_sen, ori_masked_sen,bool_debug)
                                     bert_cache[masked_sentence] =  [ent_prob,ent_prob_gen]
+                                    if len(cap_sen)>1:
+                                        ent_prob['LOC']+=0.15
                                 ent_prob = pure_ent(ent_prob)
                                 ent_prob_gen = pure_ent(ent_prob_gen)
-                                print('ent_prob', ent_prob)
-                                bool_detected = fusion_strategy29(ent_prob,context_ent_prob, ent_thres, context_thres, all_sub_lists[i], abbr_dict.keys(), bool_general, pos_lists[i], merge_thres=merge_thres)
+                                if bool_debug:
+                                    print('ent_prob', ent_prob)
+                                bool_detected = fusion_strategy29(ent_prob,context_ent_prob, ent_thres, context_thres, all_sub_lists[i], abbr_dict.keys(), bool_general, pos_lists[i], abb_context_thres, merge_thres,num_context_thres, single_person_c_t)
     
                             
-#                            if bool_remove:
-#                                if all_sub_lists[i][-1] in last_remove:
-#                                    del all_sub_lists[i][-1]
-#                                if all_sub_lists[i][0] in first_remove:
-#                                    del all_sub_lists[i][0]
-                                    
-#                            bool_person = 0
                             bool_inter = 0
                             for hashtag in hashtag_offsets:
                                 if intersection(list(range(hashtag[0],hashtag[1]+1)), list(range(cur_off_pla[0],cur_off_pla[1]+1))):
@@ -990,7 +982,8 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                         bool_check = 0
                                         break
                                 if bool_check:
-                                        print('entity', all_sub_lists[i])                          
+                                        if bool_debug:
+                                            print('entity', all_sub_lists[i])                          
                                         masked_sentence,cap_sen, ori_masked_sen = gen_mask_sentence3(all_sub_lists[i])
                                         if masked_sentence in bert_cache.keys():
                                             ent_prob = bert_cache[masked_sentence][0]
@@ -999,16 +992,17 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                             if ent_prob['LOC'] < special_ent_t:
                                                 break
                                         if len(cap_sen) < 2 and (cap_sen[0] in obj.Word_Entities.keys() or cap_sen[0].lower() in obj.Word_Entities.keys()):
-                                            ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen)
+                                            ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug)
                                             ent_prob = pure_ent(ent_prob)
                                             if ent_prob['LOC'] < special_ent_t:
                                                 break
                                         cur_off_pla = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
                                         masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, pos_lists[i])
-                                        context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen)                                        
+                                        context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug)                                        
     #                                        print(masked_context_sentence)
                                         context_ent_prob = pure_ent(context_ent_prob)
-                                        print('special check:context_ent_prob', context_ent_prob)
+                                        if bool_debug:                                            
+                                            print('special check:context_ent_prob', context_ent_prob)
     
                                         if not weight:
                                             context_ent_prob = context_ent_prob_gen
@@ -1021,10 +1015,11 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                                 ent_prob = bert_cache[masked_sentence][0]
                                                 ent_prob_gen = bert_cache[masked_sentence][1]
                                             else:
-                                                ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen)
+                                                ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug)
                                                 bert_cache[masked_sentence] =  [ent_prob,ent_prob_gen]
                                             ent_prob = pure_ent(ent_prob)
-                                            print('special check:ent_prob', ent_prob)
+                                            if bool_debug:                                                                                            
+                                                print('special check:ent_prob', ent_prob)
         
                                             if ent_prob['LOC'] >= special_ent_t:                                                
                                                 bool_inter = 0
@@ -1102,7 +1097,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
             if not no_bert:
                 print(detected_place_names)
                 print(detected_offsets)
-                print(place_offset)
+#                print(place_offset)
     
             for p, i in enumerate(place_names):
                 cur_len_p = 0

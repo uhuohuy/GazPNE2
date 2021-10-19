@@ -31,17 +31,21 @@ def main():
     parser.add_argument('--epoch', type=int, default= 4)
     parser.add_argument('--abb_ent_thres', type=float, default= 0.3)
     parser.add_argument('--context_thres', type=float, default= 0.3)
+    parser.add_argument('--abb_context_thres', type=float, default= 0.2)
+    parser.add_argument('--num_context_thres', type=float, default= 0.2)
+    parser.add_argument('--single_person_c_t', type=float, default= 0.23)
     parser.add_argument('--osm', type=int, default= 1)
     parser.add_argument('--weight', type=int, default= 1)
-    parser.add_argument('--bool_fast', type=int, default= 0)
+    parser.add_argument('--bool_fast', type=int, default= 1)
     parser.add_argument('--special_ent_t', type=float, default= 0.3)
     parser.add_argument('--bool_general_check', type=int, default= 1)
     parser.add_argument('--general_words', type=int, default= 26000)
     parser.add_argument('--merge_thres', type=float, default= 0.5)
-    parser.add_argument('--dic_neig', type=int, default= 200)
-    parser.add_argument('--con_neig', type=int, default= 200)
+    parser.add_argument('--dic_neig', type=int, default= 301)
+    parser.add_argument('--con_neig', type=int, default= 301)
     parser.add_argument('--emw', type=int, default= 4)
-    parser.add_argument('--fc_ratio', type=float, default= 1)
+    parser.add_argument('--fc_ratio', type=float, default= 0.25)
+    parser.add_argument('--bool_debug', type=int, default= 0)
 
     args = parser.parse_args()
     
@@ -57,6 +61,10 @@ def main():
     print ('epoch: '+str(args.epoch))
     print ('abb_ent_thres: '+str(args.abb_ent_thres))
     print ('context_thres: '+str(args.context_thres))
+    print ('abb_context_thres: '+str(args.abb_context_thres))
+    print ('num_context_thres: '+str(args.num_context_thres))
+    print ('single_person_c_t: '+str(args.single_person_c_t))
+
     print ('osm: '+str(args.osm))
     print ('weight: '+str(args.weight))
     print ('bool_fast: '+str(args.bool_fast))
@@ -68,6 +76,8 @@ def main():
     print ('con_neig: '+str(args.con_neig))
     print ('emw: '+str(args.emw))
     print ('fc_ratio: '+str(args.fc_ratio))
+    print ('bool_debug: '+str(args.bool_debug))
+    
     start_time = time.time()
 
     obj = UnsupNER(args.dic_neig,args.con_neig,args.emw)
@@ -77,7 +87,7 @@ def main():
     print('time_str',time_str)
         
     if args.input == 2:
-        regions=[3]
+        regions=[32,31,30]
     elif args.input == 0:
         regions=[49]
     elif args.input == 5:
@@ -101,7 +111,7 @@ def main():
     elif args.input == 14:
         regions=[59]
     else:
-        regions = [25,26,6,7, 20, 21, 9,10,28,17, 18, 19, 8,15,0,1,2,11,12,13,14]
+        regions = [0,25,26,6,7, 20, 21, 9,10,28,17, 18, 19, 8,15,1,2,11,12,13,14]
     fc_file='data/fc.txt'
     fc_tokens = extract_tokens(fc_file)
     file_name = 'data/osm_abbreviations_globe.csv'
@@ -165,7 +175,8 @@ def main():
                                 args.special_con_t, args.abb_ent_thres, args.context_thres, \
                                                                args.weight,args.bool_fast, args.special_ent_t, \
                                                                general_place_list,abv_punk,\
-                                                               args.merge_thres,fc_tokens,args.fc_ratio,args.input_file)
+                                                               args.merge_thres,fc_tokens,args.fc_ratio,args.input_file,\
+                                                               args.abb_context_thres, args.num_context_thres, args.single_person_c_t,args.bool_debug)
                     print('region '+ str(region)+' : F1 ' + str(F1)+' : thres ' + str(args.thres1))
 #    writer.save()
 if __name__ == '__main__':

@@ -63,6 +63,27 @@ def load_embeding(emb_file):
     glove = {w: vectors[word2idx[w]] for w in words}
     return glove,emb_dim
 
+def load_bigram_model(bigram_file):
+    bigram_model = {}
+
+    with open(bigram_file, 'rb') as f:
+        for l in f:
+            line = l.decode().split()
+            if len(line) == 3:
+                bigram_model[(line[0],line[1])] = float(line[2])
+    return bigram_model
+
+def save_bigram_model(listOfBigrams,file_name):
+    file = open(file_name, 'w')
+    for bigrams in listOfBigrams:
+        value = round(listOfBigrams[bigrams], 5)
+        if value == 0.0:
+            value = 0
+        if value==1.0:
+            value = 1
+        file.write(bigrams[0]+ ' ' + bigrams[1] + ' ' + str(value) + '\n')
+    file.close()
+
 def feat_char_loc(word, max_char_len):
     return_char_loc_vector = []
     for i in range(max_char_len-len(word)):
@@ -541,7 +562,9 @@ if __name__ == '__main__':
 #    print(extract_tokens('data/fc.txt'))
 #    print(index_list_int(1,[0,2,3],[[0,1,2],[0,1,3],[0,1,2,3,4,],[0,1]]))
 #    print(index_list_sub(1,[0,2,3],[[0,2],[0,1,3],[0,1,3,4],[0,1]]))
-    print(using_split2('Comic-con','[^a-zA-Z^0-9]'))
+#    print(using_split2('Comic-con','[^a-zA-Z^0-9]'))
+    bigram = load_bigram_model('model/1004232731-bigram.txt')
+    save_bigram_model(bigram,'data/re.txt')
     #    print(string2pla('us flood.'))
 #    test = '1233fc55tg- f'
 #    print(split_numbers(test))
