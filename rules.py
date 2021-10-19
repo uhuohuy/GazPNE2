@@ -70,8 +70,8 @@ def fusion_strategy28(ent_prob,context_ent_prob, ent_thres, context_thres, entit
 
 
 def fusion_strategy29(ent_prob,context_ent_prob, ent_thres, context_thres, entity, abbr, \
-                      bool_general, pos_lists, abb_context_thres = 0.15, merge_thres=0.5, \
-                      abb_ex_t = 0.4, num_context_thres = 0.2, add_prob = 0, context_thres_gene = 0.7, single_person_c_t = 0.23):
+                      bool_general, pos_lists, abb_context_thres = 0.2, merge_thres=0.5, \
+                     num_context_thres = 0.2,  single_person_c_t = 0.23,  abb_ex_t = 0.4,  context_thres_gene = 0.7):
     if not bool_general:
         disturb = 0.000001
     #    add_prob = 0.25
