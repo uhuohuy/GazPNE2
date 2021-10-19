@@ -30,10 +30,10 @@ Note that, in the first run, the BERTWeeet and BERT models will be automaticlly 
 
 > python -u main.py --input=4 --input_file=data/test.txt
 
+To execute below command in case of a jave error.  
+
 > spack load openjdk@11.0.8_10
 
-To execute the above command in case of a jave error.  
- 
 Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
 
 Test our manually annotated data (3000 tweets): Set <*input*> to 2.
