@@ -24,6 +24,9 @@ Download the prior probability dictionary from [here](https://drive.google.com/f
 
 Note that, in the first run, the BERTWeeet and BERT models will be automaticlly downloaded and cached on your local drive.
 
+### Install python dependencies
+
+> pip install -r requirements.txt
 
 ### Run the code
 
