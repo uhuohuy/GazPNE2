@@ -29,6 +29,7 @@ Download the prior probability dictionary from [here](https://drive.google.com/f
 
 ### Download pretrained BERTweet model
 > wget https://public.vinai.io/BERTweet_base_fairseq.tar.gz
+
 > tar -xzvf BERTweet_base_fairseq.tar.gz
 
 In the first run, the pretrained BERT models will be automaticlly downloaded and cached on the local drive.
