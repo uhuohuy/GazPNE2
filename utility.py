@@ -1,6 +1,5 @@
 import re
 import codecs
-from constant import POS_TAGS
 import unicodedata
 import csv
 import numpy as np
@@ -437,17 +436,6 @@ def abbrevison(abr_file):
                 abbr[row[1]] = tokens[0] 
     return abbr
 
-
-def pt2vector(tags):
-    vec = []
-    for tag in tags:
-        if tag[1] not in POS_TAGS.keys():
-            break
-        tag_id = POS_TAGS[tag[1]]
-        zero_list = [0]*len(POS_TAGS)
-        zero_list[tag_id-1] = 1
-        vec.extend(zero_list)
-    return vec
 
 '''to judege if a string contains numbers'''
 def hasNumbers(inputString):
