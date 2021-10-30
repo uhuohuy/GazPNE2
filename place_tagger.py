@@ -781,8 +781,8 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                 print('#'*50)
                 print(str(tweet_count)+'-th tweet' )
                 print(tweet)
-                print('ground true', place_names)
-                print('ground true', place_offset)
+                print('ground truth', place_names)
+                print('ground truth', place_offset)
 
             new_full_offset = lowerize(offsets, full_offset, tag_lists)
             save_file.write('#'*50)
