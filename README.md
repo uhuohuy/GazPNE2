@@ -38,7 +38,7 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 ### Run the code
 
 
-> python -u main.py --input=4 --input_file=data/test.txt
+> python -u main.py --input=0 --input_file=data/test.txt
 
 To execute below command in case of a jave error.  
 
