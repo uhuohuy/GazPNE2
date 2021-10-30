@@ -20,7 +20,7 @@ The data we used to evaluate our approach is as follows:
 ### Prepare model data
 Download the trained [model](https://drive.google.com/file/d/1X1njb1UAcb6TSRijxbqH8cUo6rnUZS_M/view?usp=sharing) and unzip the files into the _model_ folder.
 
-Download the prior probability dictionary from [here](https://drive.google.com/file/d/1jQ29fWNQP48nUUoU_Cwx67MffUjDTf1c/view?usp=sharing) and put it in the _data_ folder.
+Download the [prior probability dictionary](https://drive.google.com/file/d/1jQ29fWNQP48nUUoU_Cwx67MffUjDTf1c/view?usp=sharing) and put it in the _data_ folder.
 
 
 ### Install python dependencies
