@@ -24,6 +24,7 @@ Download the prior probability dictionary from [here](https://drive.google.com/f
 
 
 ### Install python dependencies
+Python 3.7 is required
 
 > pip install -r requirements.txt
 > pip install fastBPE
