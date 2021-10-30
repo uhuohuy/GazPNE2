@@ -26,6 +26,7 @@ Download the prior probability dictionary from [here](https://drive.google.com/f
 ### Install python dependencies
 
 > pip install -r requirements.txt
+> pip install fastBPE
 
 ### Download pretrained BERTweet model
 > wget https://public.vinai.io/BERTweet_base_fairseq.tar.gz
