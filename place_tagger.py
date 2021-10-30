@@ -13,7 +13,6 @@ from CMUTweetTagger import runtagger_parse
 import time
 import json
 import pandas as pd
-from BertEmbeds import BertEmbeds
 from utility import load_osm_names_fre
 import os
 import torch.nn.functional as F
