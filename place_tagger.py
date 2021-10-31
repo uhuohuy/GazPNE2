@@ -507,37 +507,38 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
                 sentences_lowcases = [[x.lower() for x in y] for y in sentences]
                 tweet_cache[key]=[[], [],sentences,offsets,full_offset,sentences_lowcases,tweet,hashtag_offsets,dis_split, [], []]
     else:
-        with open(t_json_file) as json_file:
-            js_data = json.load(json_file)
-            for key in js_data.keys():
-                tweet = js_data[key]['text']
-                tweet = demoji.replace(tweet,  " ") 
-                place_names = []
-                place_offset = []
-                amb_place_names = []
-                amb_place_offset = []
-
-                total_tweet_count += 1
-                test_keys.append(key)
-                for cur_k in js_data[key].keys():
-                    if cur_k == 'text':
-                        tweet = js_data[key][cur_k]
-                    else:
-                        row_nobrackets = re.sub("[\(\[].:;*?[\)\]]", "", js_data[key][cur_k]['text'])         
-                        corpus = [word.lower() for word in re.split("[. #,&\"\',’]",row_nobrackets)]
-                        corpus = [word  for word in corpus if word]
-                        if js_data[key][cur_k]['type'] != 'ambLoc':
-                            place_names.append(tuple(corpus))
-                            place_offset.append(tuple([int(js_data[key][cur_k]['start_idx']),int(js_data[key][cur_k]['end_idx'])-1]))
+        if  os.path.isfile(t_json_file):
+            with open(t_json_file) as json_file:
+                js_data = json.load(json_file)
+                for key in js_data.keys():
+                    tweet = js_data[key]['text']
+                    tweet = demoji.replace(tweet,  " ") 
+                    place_names = []
+                    place_offset = []
+                    amb_place_names = []
+                    amb_place_offset = []
+    
+                    total_tweet_count += 1
+                    test_keys.append(key)
+                    for cur_k in js_data[key].keys():
+                        if cur_k == 'text':
+                            tweet = js_data[key][cur_k]
                         else:
-                            if region in org_ignore_list:
-                                amb_place_names.append(tuple(corpus))
-                                amb_place_offset.append(tuple([int(js_data[key][cur_k]['start_idx']),int(js_data[key][cur_k]['end_idx'])-1]))
-
-                if key not in tweet_cache.keys():
-                    sentences, offsets,full_offset, hashtag_offsets ,dis_split = extract_sim(tweet,[],1,abv_punk)
-                    sentences_lowcases = [[x.lower() for x in y] for y in sentences]
-                    tweet_cache[key]=[place_names,place_offset,sentences,offsets,full_offset,sentences_lowcases,tweet,hashtag_offsets,dis_split,amb_place_names,amb_place_offset]
+                            row_nobrackets = re.sub("[\(\[].:;*?[\)\]]", "", js_data[key][cur_k]['text'])         
+                            corpus = [word.lower() for word in re.split("[. #,&\"\',’]",row_nobrackets)]
+                            corpus = [word  for word in corpus if word]
+                            if js_data[key][cur_k]['type'] != 'ambLoc':
+                                place_names.append(tuple(corpus))
+                                place_offset.append(tuple([int(js_data[key][cur_k]['start_idx']),int(js_data[key][cur_k]['end_idx'])-1]))
+                            else:
+                                if region in org_ignore_list:
+                                    amb_place_names.append(tuple(corpus))
+                                    amb_place_offset.append(tuple([int(js_data[key][cur_k]['start_idx']),int(js_data[key][cur_k]['end_idx'])-1]))
+    
+                    if key not in tweet_cache.keys():
+                        sentences, offsets,full_offset, hashtag_offsets ,dis_split = extract_sim(tweet,[],1,abv_punk)
+                        sentences_lowcases = [[x.lower() for x in y] for y in sentences]
+                        tweet_cache[key]=[place_names,place_offset,sentences,offsets,full_offset,sentences_lowcases,tweet,hashtag_offsets,dis_split,amb_place_names,amb_place_offset]
     print('tag pos')
     index = 0
     tag_list = []

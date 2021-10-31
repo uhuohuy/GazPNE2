@@ -111,7 +111,7 @@ def main():
     elif args.input == 14:
         regions=[59]
     else:
-        regions = [0,25,26,6,7, 20, 21, 9,10,28,17, 18, 19, 8,15,1,2,11,12,13,14]
+        regions = [15,8,20, 21, 9,10,28,17,11,12,13,14,0,1,2,25,26,6,7]
     fc_file='data/fc.txt'
     fc_tokens = extract_tokens(fc_file)
     file_name = 'data/osm_abbreviations_globe.csv'
