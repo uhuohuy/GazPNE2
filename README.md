@@ -27,6 +27,7 @@ Download the [prior probability dictionary](https://drive.google.com/file/d/1jQ2
 Python 3.7 is required
 
 > pip install -r requirements.txt
+
 > pip install fastBPE
 
 ### Download pretrained BERTweet model
