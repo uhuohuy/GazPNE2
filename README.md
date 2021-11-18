@@ -45,7 +45,7 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 
 To execute below command in case of a jave error.  
 
-> spack load openjdk@11.0.8_10
+> spack load openjdk
 
 Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
 
