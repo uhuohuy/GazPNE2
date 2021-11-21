@@ -842,11 +842,11 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
             for idx, sentence in enumerate(raw_sentences):
                 if sentence:
                     cur_off = offsets[idx]
-                    print(cur_off)
+                     # print(cur_off)
     
                     sub_index, all_sub_lists, pos_lists = extract_nouns_tweet(tag_lists[idx],s_max_len,dis_split, cur_off)
-                    print(sub_index)
-                    print(all_sub_lists)
+                    # print(sub_index)
+                    # print(all_sub_lists)
                     if not all_sub_lists:
                         continue
                     index_t += 1
