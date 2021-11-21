@@ -4,9 +4,9 @@ import os
 import re
 import time
 import SentWrapper
-MASK_TAG = "__entity__"
+MASK_TAG = "entity"
 MASK_TAG2 = "[MASK]"
-
+TWEET_MASK_TAG = '<mask>'
 DISPATCH_MASK_TAG = "entity"
 MODEL_PATH ='bert-large-cased'
 
@@ -51,7 +51,7 @@ class UnsupNER:
         self.Word_Entities = read_ent_file('data/word_ent'+str(neigh)+'w'+str(weight)+'.txt')   # word_ent100_pure.txt
         self.Word_Entities_C = self.Word_Entities #dist_v2.read_ent_file('data/word_ent'+str(context_neigh)+'w'+str(weight)+'.txt')   # word_ent100_pure.txt
 
-    def context_cue_new(self, masked_sent, bool_tweet_bert=0, ent=[],  ori_masked_sen = '', bool_debug=0):
+    def context_cue_new(self, masked_sent, bool_tweet_bert=0, ent=[],  ori_masked_sen = '', bool_debug=0, bool_formal=0):
         ent_prob = {}
         ent_prob['LOC'] = 0
         ent_prob_gen = {}
@@ -59,7 +59,12 @@ class UnsupNER:
         descs = []
         if bool_tweet_bert:
 #            start_time = time.time()
-            descs, desc_probs = self.desc_singleton.punct_sentence_tweet(masked_sent)
+            if not bool_formal:
+                descs, desc_probs = self.desc_singleton.punct_sentence_tweet(masked_sent)
+            else:
+                masked_sent = masked_sent.replace(TWEET_MASK_TAG,MASK_TAG2)
+                descs, desc_probs = self.desc_singleton.punct_sentence_simple(masked_sent)
+                
 #            print(bool_tweet_bert, 'punct_sentence_tweet: ', time.time()-start_time)
 
             if len(ent)  == 1:

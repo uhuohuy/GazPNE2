@@ -113,8 +113,6 @@ class SentWrapper:
 
         #pdb.set_trace()
     def punct_sentence_simple(self,text):
-
-        text+='.'
         result = []
         result_probs = []
         debug_count = 0

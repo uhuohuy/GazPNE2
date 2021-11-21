@@ -46,6 +46,7 @@ def main():
     parser.add_argument('--emw', type=int, default= 4)
     parser.add_argument('--fc_ratio', type=float, default= 0.25)
     parser.add_argument('--bool_debug', type=int, default= 0)
+    parser.add_argument('--bool_formal', type=int, default= 0)
 
     args = parser.parse_args()
     
@@ -77,7 +78,8 @@ def main():
     print ('emw: '+str(args.emw))
     print ('fc_ratio: '+str(args.fc_ratio))
     print ('bool_debug: '+str(args.bool_debug))
-    
+    print ('bool_debug: '+str(args.bool_formal))
+
     start_time = time.time()
 
     obj = UnsupNER(args.dic_neig,args.con_neig,args.emw)
@@ -111,7 +113,7 @@ def main():
     elif args.input == 14:
         regions=[59]
     else:
-        regions = [15,8,20, 21, 9,10,28,17,11,12,13,14,0,1,2,25,26,6,7]
+        regions = [15] #[15,8,20, 21, 9,10,28,17,11,12,13,14,0,1,2,25,26,6,7]
     fc_file='data/fc.txt'
     fc_tokens = extract_tokens(fc_file)
     file_name = 'data/osm_abbreviations_globe.csv'
@@ -170,13 +172,15 @@ def main():
             print('epoch:'+str(epoch))
             if epoch == args.epoch:
                 for r_idx, region in enumerate(regions):
-                    F1, P,R = place_tagging(int(args.input == 1), time_str,obj,args.thres1,args.id,args.osmembed,args.bool_osm,1,args.cnn,region,\
+                    F1, P,R = place_tagging(int(args.input == 1), time_str,obj,args.thres1,args.id,\
+                                args.osmembed,args.bool_osm,1,args.cnn,region,\
                                 args.lstm,epoch,args.filter_l,1,osm_names, args.emb, \
                                 args.special_con_t, args.abb_ent_thres, args.context_thres, \
-                                                               args.weight,args.bool_fast, args.special_ent_t, \
-                                                               general_place_list,abv_punk,\
-                                                               args.merge_thres,fc_tokens,args.fc_ratio,args.input_file,\
-                                                               args.abb_context_thres, args.num_context_thres, args.single_person_c_t,args.bool_debug)
+                                args.weight,args.bool_fast, args.special_ent_t, \
+                                general_place_list,abv_punk, args.merge_thres,\
+                                fc_tokens,args.fc_ratio,args.input_file,\
+                                args.abb_context_thres, args.num_context_thres, \
+                                args.single_person_c_t,args.bool_debug,args.bool_formal)
                     print('region '+ str(region)+' : F1 ' + str(F1)+' : thres ' + str(args.thres1))
 #    writer.save()
 if __name__ == '__main__':

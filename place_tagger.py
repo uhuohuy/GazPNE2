@@ -31,6 +31,9 @@ NUMBER_POS = ['$']
 IGNORE = [] #'#','NEWLINE'
 CAP = ['N','^','G']
 LOW = ['V']
+spatial_indicators = ['in','near','at','on','of','to','beyond','over','off','by','under','behind','from']
+exp_pos_list = ['^','$']
+exp_word = ['the']
 
 #def read_tweets():
 #    tweets_file = "data/raw_tweet.txt"#
@@ -115,8 +118,8 @@ def gen_mask_sentence3(sentence):
             sen += s + ' '
             cap_list.append(s)
         origin_sen += s + ' '
-    masked_sen = sen + 'is a ' + MASK_TAG
-    ori_masked_sen = origin_sen + 'is a ' + MASK_TAG
+    masked_sen = sen + 'is a ' + MASK_TAG +'.'
+    ori_masked_sen = origin_sen + 'is a ' + MASK_TAG+'.'
     return masked_sen, cap_list, ori_masked_sen
 
 
@@ -570,12 +573,12 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
     index = 0
     for key in test_keys:
         tag_lists = []
-#                print(key)
-#                print(tweet_cache[key][4])
-#                print(index)
+        # print(key)
+        # print(tweet_cache[key][4])
+        # print(index)
         
         if tweet_cache[key][4]: # and tag_list[index]
-#                    print(tag_list[index])
+            # print(tag_list[index])
             aligned_full_offset = align(tag_list[index], tweet_cache[key][4])
 #                    print(aligned_full_offset)
 
@@ -641,13 +644,44 @@ def pure_ent(target_ent):
             output_prob[key]=target_ent[key]
     return output_prob
 
+#def include_suffix(cur_off,sub_index,i,j,sub_sen,all_sub_lists,lastfix_places_words):
+#    if cur_off[sub_index[j][0]][0] == cur_off[sub_index[i][0]][0] \
+#    and cur_off[sub_index[j][-1]][1] > cur_off[sub_index[i][-1]][1] \
+#    and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[-1] in lastfix_places_words:
+#        return True
+#    else:
+#        return False
+
+def bool_expansion( sub_index,i,j,lastfix_places_words,final_sub_sen,tag_lists,spatial_indicators,prefix_place_words,exp_pos_list):
+    if (is_Sublist(sub_index[j],sub_index[i])):
+        if j in final_sub_sen:
+            return True
+        if (sub_index[j][0] != 0 and tag_lists[sub_index[j][0]-1][0].lower() in spatial_indicators) or \
+           (sub_index[j][0] > 1 and tag_lists[sub_index[j][0]-1][0].lower() in exp_word and \
+           tag_lists[sub_index[j][0]-2][0].lower() in spatial_indicators) :
+            for k in sub_index[j]:
+               if k < sub_index[i][0] and tag_lists[k][1] not in exp_pos_list and tag_lists[k][0].lower() not in prefix_place_words:
+                   return False
+               elif k> sub_index[i][-1] and tag_lists[k][0].lower() not in lastfix_places_words:
+                   return False
+        else:
+            for k in sub_index[j]:
+               if k < sub_index[i][0] and tag_lists[k][0].lower() not in prefix_place_words:
+                   return False
+               elif k> sub_index[i][-1] and tag_lists[k][0].lower() not in lastfix_places_words:
+                   return False
+        return True
+    else:
+        return False
+        
 
 def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,hc,hidden,region,lstm_dim,epoch,filter_l,\
              bool_remove,osm_names, emb=1, loc_thres=0.1,\
              ent_thres=0.3, context_thres=0.2,  weight=1, \
              bool_fast = 0, special_ent_t = 0.4, \
              general_words=[],abv_punk={}, merge_thres=0.4, \
-            fc_tokens=[],fc_ratio=0.4, input_file='data/test.txt',abb_context_thres=0.2, num_context_thres=0.2, single_person_c_t=0.2, bool_debug=1):
+            fc_tokens=[],fc_ratio=0.4, input_file='data/test.txt',abb_context_thres=0.2, \
+                num_context_thres=0.2, single_person_c_t=0.2, bool_debug=1,bool_formal=0):
     fc_tokens = [item for item in fc_tokens if item not in category_words_simple]
     postive_pro_t = thres
     PAD_idx = 0
@@ -782,8 +816,8 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                 print('#'*50)
                 print(str(tweet_count)+'-th tweet' )
                 print(tweet)
-                print('ground truth', place_names)
-                print('ground truth', place_offset)
+                #print('ground truth', place_names)
+                #print('ground truth', place_offset)
 
             new_full_offset = lowerize(offsets, full_offset, tag_lists)
             save_file.write('#'*50)
@@ -808,8 +842,11 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
             for idx, sentence in enumerate(raw_sentences):
                 if sentence:
                     cur_off = offsets[idx]
+                    print(cur_off)
     
                     sub_index, all_sub_lists, pos_lists = extract_nouns_tweet(tag_lists[idx],s_max_len,dis_split, cur_off)
+                    print(sub_index)
+                    print(all_sub_lists)
                     if not all_sub_lists:
                         continue
                     index_t += 1
@@ -907,7 +944,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                             masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, pos_lists[i])
                             if bool_debug:
                                 print(masked_context_sentence)
-                            context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug)
+                            context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug,bool_formal)
                             context_ent_prob = pure_ent(context_ent_prob)
                             if bool_debug:
                                 print(all_sub_lists[i])
@@ -930,7 +967,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                     ent_prob = bert_cache[masked_sentence][0]
                                     ent_prob_gen = bert_cache[masked_sentence][1]
                                 else:
-                                    ent_prob, ent_prob_gen ,descs = obj.context_cue_new(masked_sentence,0,cap_sen, ori_masked_sen,bool_debug)
+                                    ent_prob, ent_prob_gen ,descs = obj.context_cue_new(masked_sentence,0,cap_sen, ori_masked_sen,bool_debug,bool_formal)
                                     bert_cache[masked_sentence] =  [ent_prob,ent_prob_gen]
                                     if len(cap_sen)>1:
                                         ent_prob['LOC']+=0.15
@@ -992,13 +1029,13 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                             if ent_prob['LOC'] < special_ent_t:
                                                 break
                                         if len(cap_sen) < 2 and (cap_sen[0] in obj.Word_Entities.keys() or cap_sen[0].lower() in obj.Word_Entities.keys()):
-                                            ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug)
+                                            ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug,bool_formal)
                                             ent_prob = pure_ent(ent_prob)
                                             if ent_prob['LOC'] < special_ent_t:
                                                 break
                                         cur_off_pla = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
                                         masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, pos_lists[i])
-                                        context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug)                                        
+                                        context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug,bool_formal)                                        
     #                                        print(masked_context_sentence)
                                         context_ent_prob = pure_ent(context_ent_prob)
                                         if bool_debug:                                            
@@ -1015,7 +1052,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                                 ent_prob = bert_cache[masked_sentence][0]
                                                 ent_prob_gen = bert_cache[masked_sentence][1]
                                             else:
-                                                ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug)
+                                                ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug,bool_formal)
                                                 bert_cache[masked_sentence] =  [ent_prob,ent_prob_gen]
                                             ent_prob = pure_ent(ent_prob)
                                             if bool_debug:                                                                                            
@@ -1037,7 +1074,8 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                                           0,0,fc_count/float(len(context_descs)),postive_pro_t+0.02,amb_place_offset, amb_place_names, cur_hash)
                                                 cur_results[i]=result_mid
                                         
-                                        
+                    overlapped = []
+                    real_detected_index = []
                     for i in detected_index:
                         bool_sub = False
                         for j in detected_index:
@@ -1045,46 +1083,129 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                 if (is_Sublist(sub_index[j],sub_index[i])):
                                     bool_sub = True
                                     break
+                        replace_list = []
                         if not bool_sub:
                             for j, sub_sen in enumerate(all_sub_lists):
-                                sub_sen = [replace_digs(word) for word in sub_sen]
-                                sub_sen = [word.lower() for word in sub_sen]
-                                if cur_off[sub_index[j][-1]][1] == cur_off[sub_index[i][-1]][1] \
-                                     and cur_off[sub_index[i][0]][0] > cur_off[sub_index[j][0]][0] \
-                                     and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[0] in prefix_places_words:
-                                         if not bool_fast:
-                                             cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
-                                             cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
-                                             name=''
-                                             for t in all_sub_lists[j]:
-                                                 name += t + ' '
-                                             pos_name = ''
-                                             for t in pos_lists[j]:
-                                                 pos_name += t + ' '
-                                             cur_results[i]['text'] = name                                    
-                                             cur_results[i]['pos'] = pos_name
-                                         i = j
-                                         break
-                                elif cur_off[sub_index[j][0]][0] == cur_off[sub_index[i][0]][0] \
-                                     and cur_off[sub_index[j][-1]][1] > cur_off[sub_index[i][-1]][1] \
-                                     and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[-1] in lastfix_places_words:
-                                         if not bool_fast:
-                                             cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
-                                             cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
-                                             name=''
-                                             for t in all_sub_lists[j]:
-                                                 name += t + ' '
-                                             pos_name = ''
-                                             for t in pos_lists[j]:
-                                                 pos_name += t + ' '
-                                             cur_results[i]['text'] = name                                    
-                                             cur_results[i]['pos'] = pos_name
-                                         i = j
-                                         break
-    
+                                bool_intersect = 0
+                                for k in detected_index:
+                                    if k!=j and k!=i:
+                                        if intersection(sub_index[j], sub_index[k]):
+                                            bool_intersect = 1
+                                            break
+                                if not bool_intersect and bool_expansion(sub_index,i,j,lastfix_places_words,final_sub_sen,tag_lists[idx],\
+                                                  spatial_indicators,prefix_places_words,exp_pos_list):
+                                    bool_add = 1
+                                    new_replace_list = [t for t in replace_list]
+                                    for index in replace_list:
+                                        if (is_Sublist(sub_index[j],sub_index[index])):
+                                            continue
+                                        else:
+                                            if (is_Sublist(sub_index[index],sub_index[j])):
+                                                bool_add = 0
+                                                break
+                                            new_replace_list.append(index)
+                                    if bool_add:
+                                        new_replace_list.append(j)
+                                    replace_list = [t for t in new_replace_list]
+                            if replace_list:
+                                real_detected_index.append(replace_list[0])
+                            else:
+                                real_detected_index.append(i)
+
+#                                sub_sen = [replace_digs(word) for word in sub_sen]
+#                                sub_sen = [word.lower() for word in sub_sen]
+#                                if cur_off[sub_index[j][-1]][1] == cur_off[sub_index[i][-1]][1] \
+#                                     and cur_off[sub_index[i][0]][0] > cur_off[sub_index[j][0]][0] \
+#                                     and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[0] in prefix_places_words:
+#                                         if not bool_fast:
+#                                             cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
+#                                             cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
+#                                             name=''
+#                                             for t in all_sub_lists[j]:
+#                                                 name += t + ' '
+#                                             pos_name = ''
+#                                             for t in pos_lists[j]:
+#                                                 pos_name += t + ' '
+#                                             cur_results[i]['text'] = name                                    
+#                                             cur_results[i]['pos'] = pos_name
+#                                         i = j
+#                                         break
+#                                elif cur_off[sub_index[j][0]][0] == cur_off[sub_index[i][0]][0] \
+#                                     and cur_off[sub_index[j][-1]][1] > cur_off[sub_index[i][-1]][1] \
+#                                     and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[-1] in lastfix_places_words:
+#                                         if not bool_fast:
+#                                             cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
+#                                             cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
+#                                             name=''
+#                                             for t in all_sub_lists[j]:
+#                                                 name += t + ' '
+#                                             pos_name = ''
+#                                             for t in pos_lists[j]:
+#                                                 pos_name += t + ' '
+#                                             cur_results[i]['text'] = name                                    
+#                                             cur_results[i]['pos'] = pos_name
+#                                         i = j
+#                                         break
+                    for i in real_detected_index:
+                        bool_sub = False
+                        for j in real_detected_index:
+                            if j != i:
+                                if (is_Sublist(sub_index[j],sub_index[i])):
+                                    bool_sub = True
+                                    break
+                        if not bool_sub:
                             detected_place_names.append(tuple(all_sub_lists[i]))
                             detected_offsets.append(tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]]))
                             save_file.write(str(round(origin_pos_prob[i],3))+':'+str(all_sub_lists[i])+'\n')
+
+                                        
+                    # for i in detected_index:
+                    #     bool_sub = False
+                    #     for j in detected_index:
+                    #         if j != i:
+                    #             if (is_Sublist(sub_index[j],sub_index[i])):
+                    #                 bool_sub = True
+                    #                 break
+                    #     if not bool_sub:
+                    #         for j, sub_sen in enumerate(all_sub_lists):
+                    #             sub_sen = [replace_digs(word) for word in sub_sen]
+                    #             sub_sen = [word.lower() for word in sub_sen]
+                    #             if cur_off[sub_index[j][-1]][1] == cur_off[sub_index[i][-1]][1] \
+                    #                  and cur_off[sub_index[i][0]][0] > cur_off[sub_index[j][0]][0] \
+                    #                  and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[0] in prefix_places_words:
+                    #                      if not bool_fast:
+                    #                          cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
+                    #                          cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
+                    #                          name=''
+                    #                          for t in all_sub_lists[j]:
+                    #                              name += t + ' '
+                    #                          pos_name = ''
+                    #                          for t in pos_lists[j]:
+                    #                              pos_name += t + ' '
+                    #                          cur_results[i]['text'] = name                                    
+                    #                          cur_results[i]['pos'] = pos_name
+                    #                      i = j
+                    #                      break
+                    #             elif cur_off[sub_index[j][0]][0] == cur_off[sub_index[i][0]][0] \
+                    #                  and cur_off[sub_index[j][-1]][1] > cur_off[sub_index[i][-1]][1] \
+                    #                  and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[-1] in lastfix_places_words:
+                    #                      if not bool_fast:
+                    #                          cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
+                    #                          cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
+                    #                          name=''
+                    #                          for t in all_sub_lists[j]:
+                    #                              name += t + ' '
+                    #                          pos_name = ''
+                    #                          for t in pos_lists[j]:
+                    #                              pos_name += t + ' '
+                    #                          cur_results[i]['text'] = name                                    
+                    #                          cur_results[i]['pos'] = pos_name
+                    #                      i = j
+                    #                      break
+    
+                    #         detected_place_names.append(tuple(all_sub_lists[i]))
+                    #         detected_offsets.append(tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]]))
+                    #         save_file.write(str(round(origin_pos_prob[i],3))+':'+str(all_sub_lists[i])+'\n')
     #                    print ('start_time1',time.time()-start_time1)
                     if not bool_fast:
                         for index_s in cur_results:
