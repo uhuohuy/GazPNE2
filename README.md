@@ -40,6 +40,7 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 
 ### Run the code
 
+Note that it might take around 2 minutes to load required models and datasets.
 
 > python -u main.py --input=0 --input_file=data/test.txt
 
