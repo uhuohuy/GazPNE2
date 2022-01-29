@@ -92,7 +92,7 @@ class SentWrapper:
         self.tweet_rm_descs = read_descs(TWEET_REMOVE_FILE)
 #        print('tweet_rm_descs', time.time()-st)
         if not intrinsic_model:
-            self.unmasker = pipeline('fill-mask', model='bert-large-cased-whole-word-masking',top_k=top_k)
+            self.unmasker = pipeline('fill-mask', model='bert-large-cased-whole-word-masking',topk=top_k)
         else:
             self.unmasker = pipeline('fill-mask', model='distilbert-base-uncased',top_k=top_k)
 
