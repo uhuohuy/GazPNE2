@@ -5,8 +5,6 @@ import re
 import time
 import SentWrapper
 MASK_TAG = "entity"
-MASK_TAG2 = "[MASK]"
-TWEET_MASK_TAG = '<mask>'
 DISPATCH_MASK_TAG = "entity"
 MODEL_PATH ='bert-large-cased'
 
@@ -43,8 +41,8 @@ def read_ent_file(ent_file):
     return ent_dict_adv
 
 class UnsupNER:
-    def __init__(self,neigh=200, context_neigh=200, weight=5):
-        self.desc_singleton = SentWrapper.SentWrapper()
+    def __init__(self,neigh=200, context_neigh=200, weight=5, context_model=0, intrinsci_model=0):
+        self.desc_singleton = SentWrapper.SentWrapper(context_model)
 #        self.desc_singleton.descs = SentWrapper.read_descs(DESC_FILE_ADV)
 #        self.cluster_singleton = dist_v2.BertEmbeds('cache/',0,'data/vocab.txt','data/bert_vectors.txt',True,True,'data/labels.txt','data/stats_dict.txt','data/preserve_1_2_grams.txt','data/glue_words.txt')
 #        self.common_descs = read_common_descs(cf.read_config()["COMMON_DESCS_FILE"])
@@ -62,8 +60,7 @@ class UnsupNER:
             if not bool_formal:
                 descs, desc_probs = self.desc_singleton.punct_sentence_tweet(masked_sent)
             else:
-                masked_sent = masked_sent.replace(TWEET_MASK_TAG,MASK_TAG2)
-                descs, desc_probs = self.desc_singleton.punct_sentence_simple(masked_sent)
+                descs, desc_probs = self.desc_singleton.punct_sentence_simple(masked_sent,bool_tweet_bert)
                 
 #            print(bool_tweet_bert, 'punct_sentence_tweet: ', time.time()-start_time)
 
@@ -71,19 +68,17 @@ class UnsupNER:
                 new_descs = []
                 new_desc_probs = []
                 for i, item in enumerate(descs):
-                    if item.lower() !=  ent[0].lower():
+                    if str(item).lower() !=  str(ent[0]).lower():
                         new_descs.append(item)
                         new_desc_probs.append(desc_probs[i])
                 descs = new_descs
                 desc_probs = new_desc_probs
         else:
             if 1 < len(ent):
-                masked_sent = masked_sent.replace(DISPATCH_MASK_TAG,MASK_TAG2)
+                # masked_sent = masked_sent.replace(DISPATCH_MASK_TAG,MASK_TAG2)
 #                start_time = time.time()
-
                 descs, desc_probs = self.desc_singleton.punct_sentence_simple(masked_sent)
 #                print(bool_tweet_bert, 'punct_sentence_simple2: ', time.time()-start_time)
-                
             else:
 #                start_time = time.time()
                 if ent[0] in self.Word_Entities.keys():
@@ -102,7 +97,7 @@ class UnsupNER:
 
                 else:
                     
-                    masked_sent = ori_masked_sen.replace(DISPATCH_MASK_TAG,MASK_TAG2)
+                    masked_sent = ori_masked_sen;#.replace(DISPATCH_MASK_TAG,MASK_TAG2)
 #                    start_time = time.time()
                     descs, desc_probs = self.desc_singleton.punct_sentence_simple(masked_sent)
 #                    print(bool_tweet_bert, 'punct_sentence_simple2: ', time.time()-start_time)

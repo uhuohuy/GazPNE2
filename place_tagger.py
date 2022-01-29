@@ -5,7 +5,8 @@ import torch
 from rules import * 
 from utility import *
 import numpy as np
-from core import extract_sim
+import string
+from core import extract_sim,align_and_split,get_removed_indices_mention, align_adv
 from gensim.models import KeyedVectors 
 from datetime import datetime
 from wordsegment import segment
@@ -17,6 +18,15 @@ from utility import load_osm_names_fre
 import os
 import torch.nn.functional as F
 import demoji
+import stanza
+
+# PATH_TO_JAR='stanford-ner-2015-04-20.jar'
+# PATH_TO_MODEL = 'english.all.3class.distsim.crf.ser.gz';'english.muc.7class.distsim.crf.ser.gz';
+# tagger = StanfordNERTagger(model_filename=PATH_TO_MODEL,path_to_jar=PATH_TO_JAR, encoding='utf-8')
+Indefinite_articles = ['a','an','my','our']
+
+stanza_nlp = stanza.Pipeline(lang='en', processors='tokenize,ner')
+
 WORD_POS = 0
 TAG_POS = 1
 noun_tags_tweet = ['N','$','^','A', 'O','G'] #'P',
@@ -31,25 +41,17 @@ NUMBER_POS = ['$']
 IGNORE = [] #'#','NEWLINE'
 CAP = ['N','^','G']
 LOW = ['V']
-spatial_indicators = ['in','near','at','on','of','to','beyond','over','off','by','under','behind','from']
+spatial_indicators = ['in','near','at','on','to','beyond','over','off','under','behind','from']
 exp_pos_list = ['^','$']
 exp_word = ['the']
-
-#def read_tweets():
-#    tweets_file = "data/raw_tweet.txt"#
-#    # read tweets from file to list
-#    with open(tweets_file) as f:
-#        tweets = f.read().splitlines()
-#    return tweets
-
+non_LOC_NER_TYPEs = ['PERSON'] #,,'DATE','QUANTITY''PERSON',','ORG'
+LOC_NER_TYPEs = ['LOC','FAC','LOCATION','GPE']#'GPE',
+non_LOC_NER_TYPEs_2 = ['TIME']
 category_words_raw = load_osm_names_fre('data/category_words.txt', [], aug_count = 1)
-#category_words = set(category_words)
 category_words_raw = [word[0] for word in category_words_raw]
-
 category_words_simple = [item for item in category_words]
 category_words.extend(category_words_raw)
 category_words = [item for item in category_words if item != 'nyc']
-#print('nyc','nyc' in category_words)
 
 def lowerize(offsets, full_offset, tag_lists):
     new_off = []
@@ -124,7 +126,7 @@ def gen_mask_sentence3(sentence):
 
 
 
-def gen_mask_sentence2(detected_offset, ori_offset,  pos_list,  max_words=100):
+def gen_mask_sentence2(detected_offset, ori_offset,  pos_list,  max_words=80):
     sen = ''
     bool_inser = 0
     mask_index = 0
@@ -239,28 +241,6 @@ def gen_sentence_raw(terms_arr,index):
     return skip
 
 
-def load_word_index(index_file):
-    word2idx = {}
-    max_char_len = 0
-    with open(index_file, 'rb') as f:
-        for l in f:
-            line = l.decode().split()
-            word = line[0]
-            if len(word) > max_char_len:
-                max_char_len = len(word)
-            if len(line)== 1:
-                print('errors in vocab list')
-                print(line)
-                print(len(word2idx))
-                word2idx['jiyougguexjcgsnoword'] = int(line[0])
-            else:
-                if line[0] in word2idx.keys():
-                    print('appear before:',line[0])
-                    word2idx[line[0]+str(len(word2idx))] = int(line[1])
-                else:
-                    word2idx[line[0]] = int(line[1])
-    return word2idx, max_char_len
-
 '''load the bigram model from file'''
 
 ''' get the embedding of a sentence  '''
@@ -360,7 +340,17 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
     raw_data_dir = 'data/events_set'
 #    raw_data_dir = ''
     target_dir = []
-    if region==1:
+    if region==-1:
+        t_json_file = "data/test_data/formal/GWN_preproceed.json"#"data/raw_tweet.txt"
+    elif region==-2:
+        t_json_file = "data/test_data/formal/lgl_preproceed.json"#"data/raw_tweet.txt"
+    elif region==-3:
+        t_json_file = "data/test_data/formal/TR-News_preproceed.json"#"data/raw_tweet.txt"
+    elif region==-4:
+        t_json_file = "data/test_data/formal/GeoVirus_preproceed.json"#"data/raw_tweet.txt"
+    elif region==-5:
+        t_json_file = "data/test_data/formal/.json"#"data/raw_tweet.txt"
+    elif region==1:
         t_json_file = "data/test_data/houston_floods_2016_annotations.json"#"data/raw_tweet.txt"
     elif region==2:
         t_json_file = "data/test_data/chennai_floods_2015_annotations.json"#"
@@ -408,6 +398,8 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
 #    elif region == 4:
 #        dir_list = [os.path.join(raw_data_dir, o) for o in os.listdir(raw_data_dir) 
 #                        if os.path.isdir(os.path.join(raw_data_dir,o))]
+    elif region== 5:
+         dir_list = ['data']
     elif region == 50:
         raw_data_dir = 'data/events_set'
     elif region == 51:
@@ -437,30 +429,33 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
     org_ignore_list = [18,19,20,21]
     total_tweet_count = 0
     '''preload data to cache'''
-#    if region == 4:
-#        for sub_dir in dir_list:
-#            new_file_name = sub_dir+'/tweets.jsonl'
-#            if os.path.isfile(new_file_name):
-#                jsonObj = pd.read_json(path_or_buf=new_file_name, lines=True)
-#                for i in range(len(jsonObj)):
-#                    tweet = jsonObj['text'][i].encode("ascii", "ignore").decode("utf-8")
-#                    key = jsonObj['id'][i]
-#                    place_names = []
-#                    place_offset = []
-#                    amb_place_names = []
-#                    amb_place_offset = []
-#
-#                    test_keys.append(key)
-#                    if key not in tweet_cache.keys():
-#                        sentences, offsets,full_offset,hashtag_offsets,dis_split = extract_sim(tweet,word2idx.keys(),1,abv_punk)
-#                        hashtag_offsets = []
-#                        sentences_lowcases = [[x.lower() for x in y] for y in sentences]
-#                        tweet_cache[key]=[place_names,place_offset,sentences,offsets,full_offset,sentences_lowcases,tweet,hashtag_offsets,dis_split,amb_place_names,amb_place_offset]
-    if region in [55,56,57,58,59]:
-        print(target_dir)
+    if region == 4 or region == 5:
+        for sub_dir in dir_list:
+            if region == 4:
+                new_file_name = sub_dir+'/tweets.jsonl'
+            else:
+                new_file_name = sub_dir+'/matti_tweets.ndjson'
+            if os.path.isfile(new_file_name):
+                jsonObj = pd.read_json(path_or_buf=new_file_name, lines=True)
+                for i in range(len(jsonObj)):
+                    tweet = jsonObj['text'][i].encode("ascii", "ignore").decode("utf-8")
+                    key = jsonObj['id'][i]
+                    place_names = []
+                    place_offset = []
+                    amb_place_names = []
+                    amb_place_offset = []
+
+                    test_keys.append(key)
+                    if key not in tweet_cache.keys():
+                        sentences, offsets,full_offset,hashtag_offsets,dis_split = extract_sim(tweet,word2idx.keys(),1,abv_punk)
+                        hashtag_offsets = []
+                        sentences_lowcases = [[x.lower() for x in y] for y in sentences]
+                        tweet_cache[key]=[place_names,place_offset,sentences,offsets,full_offset,sentences_lowcases,tweet,hashtag_offsets,dis_split,amb_place_names,amb_place_offset]
+    elif region in [55,56,57,58,59]:
+        # print(target_dir)
         for sub_dir in target_dir:
             json_files = [f for f in os.listdir(sub_dir) if f.endswith('.json')]
-            print(json_files)
+            # print(json_files)
             for file in json_files:
                 json_file = sub_dir+'/'+file
                 jf = open(json_file)
@@ -542,7 +537,7 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
                         sentences, offsets,full_offset, hashtag_offsets ,dis_split = extract_sim(tweet,[],1,abv_punk)
                         sentences_lowcases = [[x.lower() for x in y] for y in sentences]
                         tweet_cache[key]=[place_names,place_offset,sentences,offsets,full_offset,sentences_lowcases,tweet,hashtag_offsets,dis_split,amb_place_names,amb_place_offset]
-    print('tag pos')
+    # print('tag pos')
     index = 0
     tag_list = []
     total_sen = []
@@ -562,8 +557,8 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
         tag_list_temp = runtagger_parse(total_sen)
         tag_list.extend(tag_list_temp)
     tag_list=[item for item in tag_list if item]
-    print('tag pos done')
-    print(len(tag_list))
+    # print('tag pos done')
+    # print(len(tag_list))
 #            print('pos time',time.time()-start_time)
     
 #    start_time = time.time()
@@ -651,11 +646,55 @@ def pure_ent(target_ent):
 #        return True
 #    else:
 #        return False
+def is_overlapping(x1,x2,y1,y2):
+    return max(x1,y1) <= min(x2,y2)
 
-def bool_expansion( sub_index,i,j,lastfix_places_words,final_sub_sen,tag_lists,spatial_indicators,prefix_place_words,exp_pos_list):
+def filter_invalid_candidates(sub_index, all_sub_lists, pos_lists,cur_off, stanza_ents):
+    invalids = []
+    for i, index in enumerate(sub_index):
+        start_off = cur_off[index[0]][0]
+        end_off = cur_off[index[-1]][1]
+        for ent in stanza_ents:
+            if ent.type in non_LOC_NER_TYPEs and \
+                is_overlapping(ent.start_char,ent.end_char-1,start_off,end_off):
+                invalids.append(i)
+                break
+    sub_index = [sub_index[i] for i in range(len(sub_index)) if i not in invalids]
+    all_sub_lists = [all_sub_lists[i] for i in range(len(all_sub_lists)) if i not in invalids]
+    pos_lists = [pos_lists[i] for i in range(len(pos_lists)) if i not in invalids]
+    return sub_index, all_sub_lists,pos_lists
+
+def filter_invalid_candidates_adv(sub_index, all_sub_lists, pos_lists,cur_off, stanza_ents):
+    invalids = []
+    for i, index in enumerate(sub_index):
+        start_off = cur_off[index[0]][0]
+        end_off = cur_off[index[-1]][1]
+        for ent in stanza_ents:
+            if ent.type in non_LOC_NER_TYPEs:
+                terms = ent.text.lower().split()
+                if ent.start_char<=start_off and ent.end_char-1>=end_off or \
+                    (is_overlapping(ent.start_char,ent.end_char-1,start_off,end_off) and \
+                     all_sub_lists[i] in terms):
+                     # all_sub_lists[i][0].lower()==terms[0].lower()):
+                    if len(terms) <= 2: # and len(all_sub_lists[i])==1
+                        invalids.append(i)
+                        # print('stanza_person:',all_sub_lists[i])
+                        break
+            elif ent.type in non_LOC_NER_TYPEs_2:
+                if is_overlapping(ent.start_char,ent.end_char-1,start_off,end_off):
+                     # all_sub_lists[i][0].lower()==terms[0].lower()):
+                    # if len(terms) <= 2: # and len(all_sub_lists[i])==1
+                    invalids.append(i)
+                    # print('stanza_invalids:', all_sub_lists[i])
+                    break
+
+    sub_index = [sub_index[i] for i in range(len(sub_index)) if i not in invalids]
+    all_sub_lists = [all_sub_lists[i] for i in range(len(all_sub_lists)) if i not in invalids]
+    pos_lists = [pos_lists[i] for i in range(len(pos_lists)) if i not in invalids]
+    return sub_index, all_sub_lists,pos_lists
+
+def bool_expansion(sub_index,i,j,lastfix_places_words,final_sub_sen,tag_lists,spatial_indicators,prefix_place_words,exp_pos_list):
     if (is_Sublist(sub_index[j],sub_index[i])):
-        if j in final_sub_sen:
-            return True
         if (sub_index[j][0] != 0 and tag_lists[sub_index[j][0]-1][0].lower() in spatial_indicators) or \
            (sub_index[j][0] > 1 and tag_lists[sub_index[j][0]-1][0].lower() in exp_word and \
            tag_lists[sub_index[j][0]-2][0].lower() in spatial_indicators) :
@@ -673,7 +712,151 @@ def bool_expansion( sub_index,i,j,lastfix_places_words,final_sub_sen,tag_lists,s
         return True
     else:
         return False
-        
+
+
+def valid_stanza_places(stanza_ents, detected_places, detected_offset, keys,NER_TYPEs=LOC_NER_TYPEs, word_len=10):
+    new_offsets = []
+    new_places = []
+    for i, ent in enumerate(stanza_ents):
+        terms = ent.text.lower().split()
+        if len(terms) > word_len:
+            continue
+        bool_continue = True
+        for t in terms:
+            if ent.type in NER_TYPEs:
+                if t not in keys and t.lower() not in keys and not hasNumbers(t) and  t not in string.punctuation:
+                    bool_continue = False
+                    break
+        if bool_continue and  ent.type in NER_TYPEs:
+            if ent.text.lower().startswith('the '):
+                start_char = ent.start_char + 4
+                place_text = ent.text.lower()[4:len(ent.text.lower())]
+            else:
+                start_char = ent.start_char
+                place_text = ent.text.lower()
+            end_char = ent.end_char-1
+            place = place_text.split()
+            place = [item for item in place if item]
+            bool_overlapp = False
+            for off in detected_offset:
+                if is_overlapping(off[0], off[1], start_char, end_char):
+                    bool_overlapp = True
+                    break
+            if not bool_overlapp:
+                new_places.append(place)
+                new_offsets.append((start_char,end_char))
+    return new_offsets, new_places
+       
+def inStanzaLoc(stanza_ents, place_name, offset, special=0, NER_TYPEs=LOC_NER_TYPEs, Word_len = 10):
+    bool_matched = False
+    for i, ent in enumerate(stanza_ents):
+        if ent.type in LOC_NER_TYPEs:
+            if ent.text.lower().startswith('the '):
+                start_char = ent.start_char + 4
+                place_text = ent.text.lower()[4:len(ent.text.lower())]
+            else:
+                start_char = ent.start_char
+                place_text = ent.text.lower()
+            end_char = ent.end_char-1    
+            place = place_text.split()
+            place = [item for item in place if item and item not in string.punctuation]
+            if len(place)>Word_len:
+                continue
+            if special:
+                if (start_char==offset[0] and end_char == offset[1]) or \
+                    (is_overlapping(offset[0], offset[1], start_char, end_char) and place == place_name):
+                        bool_matched = True
+                        break
+            else:
+                if (start_char<=offset[0] and end_char >= offset[1]) or \
+                    (is_overlapping(offset[0], offset[1], start_char, end_char) and place == place_name):
+                        bool_matched = True
+                        break
+    return bool_matched
+                        
+    
+def filterArticles(sentence,sub_index, all_sub_lists, pos_lists):
+    invalids = []
+    for i in range(len(sub_index)):
+        if sub_index[i][0] > 0 and len(all_sub_lists[i]) > 1 and sentence[sub_index[i][0]-1].lower() in Indefinite_articles:
+            invalids.append(i)
+    sub_index = [sub_index[i] for i in range(len(sub_index)) if i not in invalids]
+    all_sub_lists = [all_sub_lists[i] for i in range(len(all_sub_lists)) if i not in invalids]
+    pos_lists = [pos_lists[i] for i in range(len(pos_lists)) if i not in invalids]
+    return sub_index, all_sub_lists, pos_lists
+    
+def sub_stanza(positives,stanza_ents,cur_off,sub_index,all_sub_lists):
+    removed = []
+    valids = []
+    for i in positives:
+        offset = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
+        place_name = [item.lower() for item in all_sub_lists[i]]
+        for j, ent in enumerate(stanza_ents):
+            if ent.type in LOC_NER_TYPEs:
+                start_char = ent.start_char
+                place_text = ent.text.lower()
+                for k in range(j+1,len(stanza_ents)):
+                    if stanza_ents[k].type in LOC_NER_TYPEs:
+                        end_char = stanza_ents[k].end_char-1
+                        place_text += ' '+stanza_ents[k].text.lower()
+                        place = place_text.split()
+                        place = [item for item in place if item and item not in string.punctuation]
+                        if (start_char==offset[0] and end_char == offset[1]) or \
+                            (is_overlapping(offset[0], offset[1], start_char, end_char) and place == place_name):
+                                removed.append(i)
+                                valids.extend(list(range(j,k+1)))
+                                break
+    return removed, list(set(valids))
+
+def general_check(bert_cache,obj,cur_off_pla,special_ent_t,\
+                   loc_thres,all_sub_list,new_full_offset,\
+                       pos_list,bool_debug,weight,nur_context=0):
+    masked_sentence,cap_sen, ori_masked_sen = gen_mask_sentence3(all_sub_list)    
+    if not nur_context:
+        if masked_sentence in bert_cache.keys():
+            ent_prob = bert_cache[masked_sentence][0]
+            ent_prob_gen = bert_cache[masked_sentence][1]
+            ent_prob = pure_ent(ent_prob)
+            if ent_prob['LOC'] > special_ent_t:
+                return 1,bert_cache
+            
+    # if len(cap_sen) < 2 and (cap_sen[0] in obj.Word_Entities.keys() or cap_sen[0].lower() in obj.Word_Entities.keys()):
+    #     ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug,0)
+    #     ent_prob = pure_ent(ent_prob)
+    #     if ent_prob['LOC'] < special_ent_t:
+    #         break
+    masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, [])
+    context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(\
+                              masked_context_sentence,1,cap_sen,'',bool_debug,0)                                        
+    context_ent_prob = pure_ent(context_ent_prob)
+    if bool_debug:                                            
+        print('special check:context_ent_prob', context_ent_prob)
+    
+    if not weight:
+        context_ent_prob = context_ent_prob_gen
+    
+    if (context_ent_prob['LOC'] >= loc_thres):
+            return 1, bert_cache        
+    else:
+        if nur_context:
+            return 0, bert_cache
+        masked_sentence,cap_sen, ori_masked_sen = gen_mask_sentence3(all_sub_list)
+        if masked_sentence in bert_cache.keys():
+            ent_prob = bert_cache[masked_sentence][0]
+            ent_prob_gen = bert_cache[masked_sentence][1]
+        else:
+            ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,\
+                                             cap_sen,ori_masked_sen,bool_debug,0)
+            bert_cache[masked_sentence] =  [ent_prob,ent_prob_gen]
+        ent_prob = pure_ent(ent_prob)
+        if bool_debug:                                                                                            
+            print('special check:ent_prob', ent_prob)
+    
+        if ent_prob['LOC'] >= special_ent_t:
+            return 1, bert_cache        
+        else:
+            return 0, bert_cache        
+
 
 def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,hc,hidden,region,lstm_dim,epoch,filter_l,\
              bool_remove,osm_names, emb=1, loc_thres=0.1,\
@@ -688,11 +871,13 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
     s_max_len = 10
     bool_mb_gaze = osm_word_emb
     bigram_file = 'model/'+model_ID+'-bigram.txt'
-    hcfeat_file = 'model/'+model_ID+'-hcfeat.txt'
-    START_WORD = 'start_string_taghu' # 'huuu'
-#    start_time = time.time()
+    # hcfeat_file = 'model/'+model_ID+'-hcfeat.txt'
+    START_WORD = 'hhh' #'start_string_taghu' # 'hhh'
+    start_time = time.time()
     bigram_model = load_bigram_model(bigram_file)
-#    print('load_bigram_model', time.time()-start_time)
+    # bigram_model = {}
+    if bool_debug:
+        print('load_bigram_model', time.time()-start_time)
     bool_special_check = 1
     if bool_mb_gaze:
         gazetteer_emb_file = 'data/osm_vector'+str(osmembed)+'.txt'
@@ -701,22 +886,27 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
         gazetteer_emb = []
         gaz_emb_dim = 0
     category_words_tuple = [tuple([word]) for word in category_words]
-    general_words = list(set(general_words).difference(set(category_words_tuple)))
-    
+    # general_words = list(set(general_words).difference(set(category_words_tuple)))
+    general_words.extend(['0','00','000','0000'])
+    general_words = list(set(general_words).difference(set([tuple(['s'])])))
+    # print(general_words)
     result_mids = []
     truth_all = []
     file_name = 'data/osm_abbreviations_globe.csv'
     abbr_dict = abbrevison1(file_name)
-#    start_time = time.time()
+    start_time = time.time()
 
-    char_hc_emb,_ = load_embeding(hcfeat_file)
-#    print('hcfeat_file', time.time()-start_time)
-#    start_time = time.time()
+    # char_hc_emb,_ = load_embeding(hcfeat_file)
+    char_hc_emb = {}
+    if bool_debug:
+        print('hcfeat_file', time.time()-start_time)
+    start_time = time.time()
 
     word_idx_file = 'model/'+model_ID+'-vocab.txt'
     word2idx, max_char_len = load_word_index(word_idx_file)
-#    print('load_word_index', time.time()-start_time)
-#    start_time = time.time()
+    if bool_debug:
+        print('load_word_index', time.time()-start_time)
+    start_time = time.time()
 
     max_char_len = 20
     if emb==4:
@@ -740,13 +930,13 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
     DROPOUT = 0.5
     flex_feat_len = 3
     fileter_l = filter_l
-#    start_time = time.time()
+    start_time = time.time()
 
     model = C_LSTM(weights_matrix, HIDDEN_DIM, fileter_l, lstm_dim, len(tag_to_ix), flex_feat_len, DROPOUT)
     model.load_state_dict(torch.load(model_path,map_location='cpu'))
     model.eval()
-#    print('load_state_dict', time.time()-start_time)
-
+    if bool_debug:
+        print('load_state_dict', time.time()-start_time)
     np_word_embeds = model.embedding.weight.detach().numpy() 
     index_t = 0
 #    if no_bert:
@@ -818,11 +1008,13 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                 print(tweet)
                 #print('ground truth', place_names)
                 #print('ground truth', place_offset)
-
+            # print(tag_lists)
             new_full_offset = lowerize(offsets, full_offset, tag_lists)
             save_file.write('#'*50)
             save_file.write('\n')
             save_file.write(str(key)+': '+tweet+'\n')
+            save_file.write(str(key)+'\n')
+
             ps = ''
             for place in place_names:
                 for w in place:
@@ -833,20 +1025,49 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
     #            save_file.write(pos_str)
     #            save_file.write('\n')
     
-#            last_remove = [] #['area','region']
-#            first_remove = [] #['se','ne','sw','nw']
+    #            last_remove = [] #['area','region']
+    #            first_remove = [] #['se','ne','sw','nw']
+            
             true_count += len(place_names)
             detected_place_names = []
             detected_offsets = []
             OSM_CONF = postive_pro_t+0.05
+            
+            # # apply stanford NER
+            # mention_index = get_removed_indices_mention(tweet)
+            # tweet_nomention = ''.join([tweet[i] for i in range(len(tweet)) if i not in mention_index])
+            # words = nltk.word_tokenize(tweet_nomention)
+            # str_w = ''
+            # for i, word in enumerate(words):
+            #         str_w += word + ' '
+            # # stanford_offset = align_and_split(tweet, str_w)
+            # stanford_result = tagger.tag(words)
+            # stanford_result = align_adv(stanford_result, tweet)
+            # print(stanford_result)
+            stanford_result = []
+
+            # print(tagged)
+
+            stanza_result = stanza_nlp(tweet)
+            stanza_ents = stanza_result.entities
+            if bool_debug:
+                print('stanza',stanza_ents)
+
+            # stanza_ents = []
+            invalids = []
             for idx, sentence in enumerate(raw_sentences):
                 if sentence:
                     cur_off = offsets[idx]
-                     # print(cur_off)
-    
+                    # print(cur_off)
+                    
                     sub_index, all_sub_lists, pos_lists = extract_nouns_tweet(tag_lists[idx],s_max_len,dis_split, cur_off)
+                    sub_index, all_sub_lists, pos_lists = filterArticles(sentence,sub_index, all_sub_lists, pos_lists)
+
                     # print(sub_index)
                     # print(all_sub_lists)
+                    sub_index, all_sub_lists, pos_lists = filter_invalid_candidates_adv(sub_index, all_sub_lists, \
+                                                                                    pos_lists,cur_off, stanza_ents)
+                    
                     if not all_sub_lists:
                         continue
                     index_t += 1
@@ -862,13 +1083,10 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                                  PAD_idx,START_WORD,bigram_model,char_hc_emb,flex_feat_len)
                         if tuple(sub_sen) in osm_names:
                             osm_probs[i] = OSM_CONF
-                        if len(sub_sen) == 1 and sub_sen[0] in category_words_simple:
-                            osm_probs[i] = 0
     
                     input_emb= torch.from_numpy(input_emb).float()
                     
                     output = model.predict(input_emb)
-    #                    print('model',  time.time()-start_time5)
                     _, preds_tensor = torch.max(output, 1)
                     pos_prob = torch.sigmoid(output).detach().numpy()
                     pos_prob = pos_prob[:,1]
@@ -887,19 +1105,60 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                          else: # some candidates are also checked as long as their pos tag is pronoun
                              all_pron = True
                              for pos in pos_lists[i]:
-                                 if pos not in PERSON_POS_ADV:
+                                 if pos not in PERSON_POS_ADV and pos not in NUMBER_POS:
                                      all_pron = False
                                      break
-                             if all_pron:
-                                 if tuple([word.lower() for word in  all_sub_lists[i]]) in general_words and not no_bert:
-                                     postives.append(i)
-                                     general_place_indexs.append(i)
-                                 
+                             # if all_pron:
+                             if tuple([replace_digs(word).lower() for word in  all_sub_lists[i]]) in general_words and not no_bert:
+                                 postives.append(i)
+                                 general_place_indexs.append(i)
+                    removed_positvie, valid_stanza_loc = sub_stanza(postives,stanza_ents,cur_off,sub_index,all_sub_lists)
+                    if bool_debug:
+                        for item in removed_positvie:
+                            print('stanza_sub',all_sub_lists[item])
+                    postives = [item for item in postives if item not in removed_positvie]
+                    temp_positive = []
+                    
+                    for i, p in enumerate(preds):
+                         if i not in postives:
+                                 all_pron = True
+                                 if all_pron or 1:
+                                   cur_off_pla = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
+                                   # for item in all_sub_lists[i]:
+                                   #     if item not in word2idx.keys():
+                                   #         break
+                                   bool_overlap = False
+                                   for j in postives:
+                                         cur_off_pla_j = tuple([cur_off[sub_index[j][0]][0],cur_off[sub_index[j][-1]][1]])
+                                         if is_overlapping(cur_off_pla[0], cur_off_pla[1], cur_off_pla_j[0], cur_off_pla_j[1]):
+                                             bool_overlap = True
+                                             break
+                                   if bool_overlap:
+                                         continue
+                                     
+                                   if len(all_sub_lists[i]) > 1 and inStanzaLoc(stanza_ents, all_sub_lists[i], cur_off_pla, 1):
+                                        if pos_prob[i] >= 0.5:
+                                        # if not [item for item in all_sub_lists[i] if item.lower() not in word2idx.keys()]:
+                                            temp_positive.append(i)
+                                            if bool_debug:
+                                              print('stanza_pob',all_sub_lists[i],pos_prob[i])
+                                        else:
+                                              valid_loc, bert_cache = general_check(bert_cache,obj,cur_off_pla,\
+                                                                                    special_ent_t,loc_thres,\
+                                                                                    all_sub_lists[i],new_full_offset,\
+                                                                                    pos_lists[i],bool_debug,weight)
+                                              if valid_loc:
+                                                  temp_positive.append(i)
+                                                  if bool_debug:
+                                                      print('stanza_str1',all_sub_lists[i])
+                                              else:
+                                                  if bool_debug:
+                                                      print('stanza_str_invalids',all_sub_lists[i])
+                    postives.extend(temp_positive)
                     origin_pos_prob = pos_prob 
                     pos_prob = pos_prob[postives]
                     sort_index = (-pos_prob).argsort()
                     sort_index = sort_index.tolist()
-    
                     index = 1
                     while len(postives) > index:
                         bool_overlap = 0
@@ -920,7 +1179,6 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                     for index in sort_index:
                         final_sub_sen.append(postives[index])
     #                    print ('start_time4',len(all_sub_lists), time.time()-start_time4)
-    
                     cur_results = {}
                     for i in final_sub_sen:
                         bool_added = True
@@ -934,25 +1192,48 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                 detected_index.append(i)
                                 continue
                             
+                            # estimate extrinsic probability    
+                            cur_off_pla = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
+                            # judge if it is also detected as location by stanza.
+                            
+                            if inStanzaLoc(stanza_ents,all_sub_lists[i],cur_off_pla,1):
+                                detected_index.append(i)
+                                continue
+                            # if inStanzaLoc(stanza_ents,all_sub_lists[i],cur_off_pla,1,\
+                            #                non_LOC_NER_TYPEs, 2):
+                            #     valid_loc, bert_cache = general_check(bert_cache,obj,cur_off_pla,\
+                            #           special_ent_t,loc_thres+0.3,\
+                            #           all_sub_lists[i],new_full_offset,\
+                            #           pos_lists[i],bool_debug,weight,1)
+                            #     if valid_loc:
+                            #         detected_index.append(i)
+                            #         print('stanza_person_loc',all_sub_lists[i])
+                            #     continue
+                                    
+                            
                             bool_general = False
                             if i in general_place_indexs:
                                 bool_general = True
-    
+                            if bool_general:
+                                continue
                             masked_sentence, cap_sen, ori_masked_sen = gen_mask_sentence3(all_sub_lists[i])
-                            # estimate extrinsic probability    
-                            cur_off_pla = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
                             masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, pos_lists[i])
                             if bool_debug:
                                 print(masked_context_sentence)
                             context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug,bool_formal)
                             context_ent_prob = pure_ent(context_ent_prob)
                             if bool_debug:
-                                print(all_sub_lists[i])
+                                # print(all_sub_lists[i])
                                 print('context_ent_prob', context_ent_prob)
                             if not weight:
                                 context_ent_prob = context_ent_prob_gen
                             
-                            bool_detected = fusion_strategy29({'LOC':0},context_ent_prob, ent_thres, context_thres, all_sub_lists[i], abbr_dict.keys(), bool_general, pos_lists[i], abb_context_thres, merge_thres,num_context_thres, single_person_c_t)
+                            bool_detected = fusion_strategy29({'LOC':0},context_ent_prob, ent_thres, \
+                                                              context_thres, all_sub_lists[i], \
+                                                              abbr_dict.keys(), bool_general, \
+                                                              pos_lists[i], abb_context_thres, \
+                                                              merge_thres,num_context_thres, \
+                                                              single_person_c_t)
                            
                             contain_number = 0
                             for item in all_sub_lists[i]:
@@ -975,9 +1256,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                 ent_prob_gen = pure_ent(ent_prob_gen)
                                 if bool_debug:
                                     print('ent_prob', ent_prob)
-                                bool_detected = fusion_strategy29(ent_prob,context_ent_prob, ent_thres, context_thres, all_sub_lists[i], abbr_dict.keys(), bool_general, pos_lists[i], abb_context_thres, merge_thres,num_context_thres, single_person_c_t)
-    
-                            
+                                bool_detected = fusion_strategy29(ent_prob,context_ent_prob, ent_thres, context_thres, all_sub_lists[i], abbr_dict.keys(), bool_general, pos_lists[i], abb_context_thres, merge_thres,num_context_thres, single_person_c_t)    
                             bool_inter = 0
                             for hashtag in hashtag_offsets:
                                 if intersection(list(range(hashtag[0],hashtag[1]+1)), list(range(cur_off_pla[0],cur_off_pla[1]+1))):
@@ -999,80 +1278,99 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                         for i in range(len(all_sub_lists)):
                             bool_all_prop = 1
                             for pos in pos_lists[i]:
-                                if not pos in PERSON_POS_ADV:
+                                if not pos in PERSON_POS:
                                     bool_all_prop = 0
                                     break
-                            if bool_all_prop and i not in final_sub_sen and i not in detected_index and not index_list_int(i,final_sub_sen,sub_index) \
-                                              and not index_list_int(i,detected_index,sub_index) and  (len(all_sub_lists[i]) == 1 and \
-                                             all_sub_lists[i][0].lower()  not in category_words) :
+                            if bool_all_prop and i not in final_sub_sen and i not in detected_index \
+                                              and not index_list_int(i,detected_index,sub_index) and len(all_sub_lists[i]) == 1: #and not index_list_int(i,final_sub_sen,sub_index) 
+                                                  #and ( len(all_sub_lists[i]) == 1 and  all_sub_lists[i][0].lower()  not in category_words) 
                                              child_index = index_list_sub(i,check_candidates,sub_index)
                                              remove_child.extend(child_index)
                                              check_candidates.append(i)
                         real_candidate = [item for item in check_candidates if item not in remove_child]
                         real_candidate = list(set(real_candidate))
                         for i in real_candidate:
-                            if 1: #i not in final_sub_sen and i not in detected_index and len(all_sub_lists[i])==1 and pos_lists[i][0] in \
+                            #if 1: #i not in final_sub_sen and i not in detected_index and len(all_sub_lists[i])==1 and pos_lists[i][0] in \
                                    #          PERSON_POS_ADV and all_sub_lists[i][0].lower() not in category_words:
-                                bool_check = 1
-                                for k in final_sub_sen:
-                                    if sub_index[i][0] in sub_index[k]:
-                                        bool_check = 0
-                                        break
-                                if bool_check:
-                                        if bool_debug:
-                                            print('entity', all_sub_lists[i])                          
-                                        masked_sentence,cap_sen, ori_masked_sen = gen_mask_sentence3(all_sub_lists[i])
-                                        if masked_sentence in bert_cache.keys():
-                                            ent_prob = bert_cache[masked_sentence][0]
-                                            ent_prob_gen = bert_cache[masked_sentence][1]
-                                            ent_prob = pure_ent(ent_prob)
-                                            if ent_prob['LOC'] < special_ent_t:
+                            bool_check = 1
+                            for k in final_sub_sen:
+                                if sub_index[i][0] in sub_index[k]:
+                                    bool_check = 0
+                                    break
+                            if bool_check:
+                                    cur_off_pla = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
+                                    if bool_debug:
+                                        print('entity', all_sub_lists[i],cur_off_pla)
+                                    if inStanzaLoc(stanza_ents,all_sub_lists[i],cur_off_pla,special=1):
+                                        add_t = 0
+                                        for item in all_sub_lists[i]: 
+                                            if item.lower() not in word2idx.keys():
+                                                add_t = 0.1
                                                 break
-                                        if len(cap_sen) < 2 and (cap_sen[0] in obj.Word_Entities.keys() or cap_sen[0].lower() in obj.Word_Entities.keys()):
-                                            ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug,bool_formal)
-                                            ent_prob = pure_ent(ent_prob)
-                                            if ent_prob['LOC'] < special_ent_t:
-                                                break
-                                        cur_off_pla = tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]])
-                                        masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, pos_lists[i])
-                                        context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug,bool_formal)                                        
-    #                                        print(masked_context_sentence)
-                                        context_ent_prob = pure_ent(context_ent_prob)
-                                        if bool_debug:                                            
-                                            print('special check:context_ent_prob', context_ent_prob)
+                                        valid_loc, bert_cache = general_check(bert_cache,obj,cur_off_pla,\
+                                        special_ent_t,loc_thres+add_t,\
+                                        all_sub_lists[i],new_full_offset,\
+                                        pos_lists[i],bool_debug,weight,1)
+                                        if valid_loc:
+                                            detected_index.append(i)
+                                            if bool_debug:
+                                                print('stanza_special1:',all_sub_lists[i])
+                                        else:
+                                            if bool_debug:
+                                                print('stanza_special1_invalids:',all_sub_lists[i])
+                                        continue
+
+                                    # continue
+                                    # masked_sentence,cap_sen, ori_masked_sen = gen_mask_sentence3(all_sub_lists[i])
+                                    # if masked_sentence in bert_cache.keys():
+                                    #     ent_prob = bert_cache[masked_sentence][0]
+                                    #     ent_prob_gen = bert_cache[masked_sentence][1]
+                                    #     ent_prob = pure_ent(ent_prob)
+                                    #     if ent_prob['LOC'] < special_ent_t:
+                                    #         break
+                                    # if len(cap_sen) < 2 and (cap_sen[0] in obj.Word_Entities.keys() or cap_sen[0].lower() in obj.Word_Entities.keys()):
+                                    #     ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug,bool_formal)
+                                    #     ent_prob = pure_ent(ent_prob)
+                                    #     if ent_prob['LOC'] < special_ent_t:
+                                    #         break
+                                    # masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, pos_lists[i])
+                                    # context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug,bool_formal)                                        
+                                    # context_ent_prob = pure_ent(context_ent_prob)
+                                    # if bool_debug:                                            
+                                    #     print('special check:context_ent_prob', context_ent_prob)
+
+                                    # if not weight:
+                                    #     context_ent_prob = context_ent_prob_gen
+                                    # bool_fc, fc_count = FC_check(fc_tokens,context_descs,all_sub_lists[i],fc_ratio)
+
+                                    # if (not bool_fast) or (context_ent_prob['LOC'] >= loc_thres):
+                                    #     masked_sentence,cap_sen, ori_masked_sen = gen_mask_sentence3(all_sub_lists[i])
+                                    #     if masked_sentence in bert_cache.keys():
+                                    #         ent_prob = bert_cache[masked_sentence][0]
+                                    #         ent_prob_gen = bert_cache[masked_sentence][1]
+                                    #     else:
+                                    #         ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug,bool_formal)
+                                    #         bert_cache[masked_sentence] =  [ent_prob,ent_prob_gen]
+                                    #     ent_prob = pure_ent(ent_prob)
+                                    #     if bool_debug:                                                                                            
+                                    #         print('special check:ent_prob', ent_prob)
     
-                                        if not weight:
-                                            context_ent_prob = context_ent_prob_gen
-                                        bool_fc, fc_count = FC_check(fc_tokens,context_descs,all_sub_lists[i],fc_ratio)
+                                    #     if ent_prob['LOC'] >= special_ent_t:                                                
+                                    #         bool_inter = 0
+                                    #         for hashtag in hashtag_offsets:
+                                    #             if intersection(list(range(hashtag[0],hashtag[1]+1)), list(range(cur_off_pla[0],cur_off_pla[1]+1))):
+                                    #                 bool_inter = 1
+                                    #                 break
     
-                                        
-                                        if (not bool_fast) or (context_ent_prob['LOC'] >= loc_thres):
-                                            masked_sentence,cap_sen, ori_masked_sen = gen_mask_sentence3(all_sub_lists[i])
-                                            if masked_sentence in bert_cache.keys():
-                                                ent_prob = bert_cache[masked_sentence][0]
-                                                ent_prob_gen = bert_cache[masked_sentence][1]
-                                            else:
-                                                ent_prob, ent_prob_gen, descs = obj.context_cue_new(masked_sentence,0,cap_sen,ori_masked_sen,bool_debug,bool_formal)
-                                                bert_cache[masked_sentence] =  [ent_prob,ent_prob_gen]
-                                            ent_prob = pure_ent(ent_prob)
-                                            if bool_debug:                                                                                            
-                                                print('special check:ent_prob', ent_prob)
-        
-                                            if ent_prob['LOC'] >= special_ent_t:                                                
-                                                bool_inter = 0
-                                                for hashtag in hashtag_offsets:
-                                                    if intersection(list(range(hashtag[0],hashtag[1]+1)), list(range(cur_off_pla[0],cur_off_pla[1]+1))):
-                                                        bool_inter = 1
-                                                        break
-        
-                                                if not (region in hashtag_ignored_list and bool_inter):
-                                                    detected_index.append(i)
-        
-                                            if not bool_fast:
-                                                result_mid = create_result(key, '2', all_sub_lists[i], pos_lists[i], cur_off_pla, \
-                                                          ent_prob,context_ent_prob,{},{},\
-                                                          0,0,fc_count/float(len(context_descs)),postive_pro_t+0.02,amb_place_offset, amb_place_names, cur_hash)
-                                                cur_results[i]=result_mid
+                                    #         if not (region in hashtag_ignored_list and bool_inter):
+                                    #             detected_index.append(i)
+                                    #             print('general_special', all_sub_lists[i])
+    
+                                    #     if not bool_fast:
+                                    #         result_mid = create_result(key, '2', all_sub_lists[i], pos_lists[i], cur_off_pla, \
+                                    #                   ent_prob,context_ent_prob,{},{},\
+                                    #                   0,0,fc_count/float(len(context_descs)),postive_pro_t+0.02,amb_place_offset, amb_place_names, cur_hash)
+                                    #         cur_results[i]=result_mid
                                         
                     overlapped = []
                     real_detected_index = []
@@ -1092,60 +1390,60 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                         if intersection(sub_index[j], sub_index[k]):
                                             bool_intersect = 1
                                             break
+                                # if bool_debug:
+                                #     print(bool_intersect,all_sub_lists[i], sub_index,i,j,tag_lists[idx])
                                 if not bool_intersect and bool_expansion(sub_index,i,j,lastfix_places_words,final_sub_sen,tag_lists[idx],\
                                                   spatial_indicators,prefix_places_words,exp_pos_list):
-                                    bool_add = 1
-                                    new_replace_list = [t for t in replace_list]
+                                    # print('replace',all_sub_lists[i],all_sub_lists[j])
+                                    bool_add_first = 1
                                     for index in replace_list:
-                                        if (is_Sublist(sub_index[j],sub_index[index])):
-                                            continue
-                                        else:
-                                            if (is_Sublist(sub_index[index],sub_index[j])):
-                                                bool_add = 0
-                                                break
-                                            new_replace_list.append(index)
-                                    if bool_add:
-                                        new_replace_list.append(j)
-                                    replace_list = [t for t in new_replace_list]
+                                        if ( not is_Sublist(sub_index[j],sub_index[index])):
+                                            bool_add_first = 0
+                                            break
+                                    if bool_add_first:
+                                        replace_list.insert(0,j)
+                                    else:
+                                        replace_list.append(j)
                             if replace_list:
                                 real_detected_index.append(replace_list[0])
                             else:
                                 real_detected_index.append(i)
-
-#                                sub_sen = [replace_digs(word) for word in sub_sen]
-#                                sub_sen = [word.lower() for word in sub_sen]
-#                                if cur_off[sub_index[j][-1]][1] == cur_off[sub_index[i][-1]][1] \
-#                                     and cur_off[sub_index[i][0]][0] > cur_off[sub_index[j][0]][0] \
-#                                     and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[0] in prefix_places_words:
-#                                         if not bool_fast:
-#                                             cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
-#                                             cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
-#                                             name=''
-#                                             for t in all_sub_lists[j]:
-#                                                 name += t + ' '
-#                                             pos_name = ''
-#                                             for t in pos_lists[j]:
-#                                                 pos_name += t + ' '
-#                                             cur_results[i]['text'] = name                                    
-#                                             cur_results[i]['pos'] = pos_name
-#                                         i = j
-#                                         break
-#                                elif cur_off[sub_index[j][0]][0] == cur_off[sub_index[i][0]][0] \
-#                                     and cur_off[sub_index[j][-1]][1] > cur_off[sub_index[i][-1]][1] \
-#                                     and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[-1] in lastfix_places_words:
-#                                         if not bool_fast:
-#                                             cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
-#                                             cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
-#                                             name=''
-#                                             for t in all_sub_lists[j]:
-#                                                 name += t + ' '
-#                                             pos_name = ''
-#                                             for t in pos_lists[j]:
-#                                                 pos_name += t + ' '
-#                                             cur_results[i]['text'] = name                                    
-#                                             cur_results[i]['pos'] = pos_name
-#                                         i = j
-#                                         break
+    
+    #                                sub_sen = [replace_digs(word) for word in sub_sen]
+    #                                sub_sen = [word.lower() for word in sub_sen]
+    #                                if cur_off[sub_index[j][-1]][1] == cur_off[sub_index[i][-1]][1] \
+    #                                     and cur_off[sub_index[i][0]][0] > cur_off[sub_index[j][0]][0] \
+    #                                     and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[0] in prefix_places_words:
+    #                                         if not bool_fast:
+    #                                             cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
+    #                                             cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
+    #                                             name=''
+    #                                             for t in all_sub_lists[j]:
+    #                                                 name += t + ' '
+    #                                             pos_name = ''
+    #                                             for t in pos_lists[j]:
+    #                                                 pos_name += t + ' '
+    #                                             cur_results[i]['text'] = name                                    
+    #                                             cur_results[i]['pos'] = pos_name
+    #                                         i = j
+    #                                         break
+    #                                elif cur_off[sub_index[j][0]][0] == cur_off[sub_index[i][0]][0] \
+    #                                     and cur_off[sub_index[j][-1]][1] > cur_off[sub_index[i][-1]][1] \
+    #                                     and len(sub_sen) -1 == len(all_sub_lists[i]) and sub_sen[-1] in lastfix_places_words:
+    #                                         if not bool_fast:
+    #                                             cur_results[i]['s_idx'] = cur_off[sub_index[j][0]][0]
+    #                                             cur_results[i]['e_idx'] = cur_off[sub_index[j][-1]][1]
+    #                                             name=''
+    #                                             for t in all_sub_lists[j]:
+    #                                                 name += t + ' '
+    #                                             pos_name = ''
+    #                                             for t in pos_lists[j]:
+    #                                                 pos_name += t + ' '
+    #                                             cur_results[i]['text'] = name                                    
+    #                                             cur_results[i]['pos'] = pos_name
+    #                                         i = j
+    #                                         break
+                    
                     for i in real_detected_index:
                         bool_sub = False
                         for j in real_detected_index:
@@ -1156,9 +1454,11 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                         if not bool_sub:
                             detected_place_names.append(tuple(all_sub_lists[i]))
                             detected_offsets.append(tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]]))
-                            save_file.write(str(round(origin_pos_prob[i],3))+':'+str(all_sub_lists[i])+'\n')
+                            save_file.write(str(all_sub_lists[i])+'\n')
+                            # save_file.write(str(round(origin_pos_prob[i],3))+':'+str(all_sub_lists[i])+'\n')
+                     
+                    #invalids.extend(include_valid_places(real_detected_index, sub_index, cur_off, stanza_ents))
 
-                                        
                     # for i in detected_index:
                     #     bool_sub = False
                     #     for j in detected_index:
@@ -1210,15 +1510,43 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                     if not bool_fast:
                         for index_s in cur_results:
                              result_mids.append(cur_results[index_s])
-      
-            c_tp, c_fp,c_fn, place_detect_score = interset_num(detected_offsets,place_offset,detected_place_names,\
+            #stanza_offs, satnza_places = valid_stanza_places(invalids, stanza_ents)
+            #if bool_debug:
+            #    print('stanza',satnza_places)
+            #for off, place in zip(stanza_offs, satnza_places):
+            #    detected_place_names.append(place)
+            #    detected_offsets.append(off)
+            #    save_file.write('stanza:'+str(place)+'\n')
+            # print(stanford_offset)
+            # print(detected_offsets)
+            
+            new_offsets, new_places = valid_stanza_places(stanza_ents, detected_place_names, detected_offsets, word2idx.keys()) #word2idx.keys()
+            
+            # # new_offsets, mew_places = valid_stanford_places(stanford_result, detected_place_names, detected_offsets)                
+            # if bool_debug:
+            #     print('stanford/stanza',new_places)
+            for off, place in zip(new_offsets, new_places):
+                valid_loc, bert_cache = general_check(bert_cache,obj,off,\
+                                            special_ent_t,loc_thres+0.1,\
+                                            place,new_full_offset,\
+                                            [],bool_debug,weight)
+                if valid_loc:
+                    if bool_debug:
+                        print('stanza_full',place)
+                    detected_place_names.append(tuple(place))
+                    detected_offsets.append(off)
+                    save_file.write('stanford/stanza:'+str(place)+'\n')
+
+            c_tp, c_fp, c_fn, place_detect_score = interset_num(detected_offsets,place_offset,detected_place_names,\
                                                                place_names,ignored_places, amb_place_offset, amb_place_names, cur_hash)
-            save_file.write('tp:'+str(c_tp)+' c_fp:'+str(c_fp)+' c_fn:'+str(c_fn))
+            
+                
+                # save_file.write('tp:'+str(c_tp)+' c_fp:'+str(c_fp)+' c_fn:'+str(c_fn))
             save_file.write('\n')
             if not no_bert:
                 print(detected_place_names)
                 print(detected_offsets)
-#                print(place_offset)
+    #                print(place_offset)
     
             for p, i in enumerate(place_names):
                 cur_len_p = 0

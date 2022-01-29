@@ -37,7 +37,7 @@ def main():
     parser.add_argument('--osm', type=int, default= 1)
     parser.add_argument('--weight', type=int, default= 1)
     parser.add_argument('--bool_fast', type=int, default= 1)
-    parser.add_argument('--special_ent_t', type=float, default= 0.3)
+    parser.add_argument('--special_ent_t', type=float, default= 0.5)
     parser.add_argument('--bool_general_check', type=int, default= 1)
     parser.add_argument('--general_words', type=int, default= 26000)
     parser.add_argument('--merge_thres', type=float, default= 0.5)
@@ -47,51 +47,61 @@ def main():
     parser.add_argument('--fc_ratio', type=float, default= 0.25)
     parser.add_argument('--bool_debug', type=int, default= 0)
     parser.add_argument('--bool_formal', type=int, default= 0)
+    parser.add_argument('--c_model', type=int, default= 0)
+    parser.add_argument('--i_model', type=int, default= 0)
 
     args = parser.parse_args()
+    if args.bool_debug:
+        print ('id: '+str(args.id))
+        print ('thres: '+str(args.thres1))
+        print ('filter_l: '+str(args.filter_l))
+        print ('emb: '+str(args.emb))
+        print ('cnn: '+str(args.cnn))
+        print ('lstm: '+str(args.lstm))
+        print ('special_con_t: '+str(args.special_con_t))
+        print ('input: '+str(args.input))
+        print ('input_file: '+str(args.input_file))
+        print ('epoch: '+str(args.epoch))
+        print ('abb_ent_thres: '+str(args.abb_ent_thres))
+        print ('context_thres: '+str(args.context_thres))
+        print ('abb_context_thres: '+str(args.abb_context_thres))
+        print ('num_context_thres: '+str(args.num_context_thres))
+        print ('single_person_c_t: '+str(args.single_person_c_t))
     
-    print ('id: '+str(args.id))
-    print ('thres: '+str(args.thres1))
-    print ('filter_l: '+str(args.filter_l))
-    print ('emb: '+str(args.emb))
-    print ('cnn: '+str(args.cnn))
-    print ('lstm: '+str(args.lstm))
-    print ('special_con_t: '+str(args.special_con_t))
-    print ('input: '+str(args.input))
-    print ('input_file: '+str(args.input_file))
-    print ('epoch: '+str(args.epoch))
-    print ('abb_ent_thres: '+str(args.abb_ent_thres))
-    print ('context_thres: '+str(args.context_thres))
-    print ('abb_context_thres: '+str(args.abb_context_thres))
-    print ('num_context_thres: '+str(args.num_context_thres))
-    print ('single_person_c_t: '+str(args.single_person_c_t))
-
-    print ('osm: '+str(args.osm))
-    print ('weight: '+str(args.weight))
-    print ('bool_fast: '+str(args.bool_fast))
-    print ('special_ent_t: '+str(args.special_ent_t))
-    print ('bool_general_check: '+str(args.bool_general_check))
-    print ('general_words: '+str(args.general_words))
-    print ('merge_thres: '+str(args.merge_thres))
-    print ('dic_neig: '+str(args.dic_neig))
-    print ('con_neig: '+str(args.con_neig))
-    print ('emw: '+str(args.emw))
-    print ('fc_ratio: '+str(args.fc_ratio))
-    print ('bool_debug: '+str(args.bool_debug))
-    print ('bool_debug: '+str(args.bool_formal))
-
+        print ('osm: '+str(args.osm))
+        print ('weight: '+str(args.weight))
+        print ('bool_fast: '+str(args.bool_fast))
+        print ('special_ent_t: '+str(args.special_ent_t))
+        print ('bool_general_check: '+str(args.bool_general_check))
+        print ('general_words: '+str(args.general_words))
+        print ('merge_thres: '+str(args.merge_thres))
+        print ('dic_neig: '+str(args.dic_neig))
+        print ('con_neig: '+str(args.con_neig))
+        print ('emw: '+str(args.emw))
+        print ('fc_ratio: '+str(args.fc_ratio))
+        print ('bool_debug: '+str(args.bool_debug))
+        print ('bool_formal: '+str(args.bool_formal))
+        print ('c_model: '+str(args.c_model))
+        print ('i_model: '+str(args.i_model))
+    
     start_time = time.time()
 
-    obj = UnsupNER(args.dic_neig,args.con_neig,args.emw)
-    print('UnsupNER', time.time()-start_time)
-
+    obj = UnsupNER(args.dic_neig,args.con_neig,args.emw,args.c_model,args.i_model)
+    if args.bool_debug:
+        print('UnsupNER', time.time()-start_time)
+    print('model is loading...')
     time_str = datetime.now().strftime('%m%d%H%M%S')
-    print('time_str',time_str)
+    # print('time_str',time_str)
         
     if args.input == 2:
         regions=[32,31,30]
+    elif args.input == 3:
+        regions=[-2,-3,-4,-5]
+
     elif args.input == 0:
         regions=[49]
+    elif args.input == -10:
+        regions=[5]        
     elif args.input == 5:
         regions=[4]
     elif args.input == 6:
@@ -113,7 +123,9 @@ def main():
     elif args.input == 14:
         regions=[59]
     else:
-        regions = [15,8,20, 21, 9,10,28,17,11,12,13,14,0,1,2,25,26,6,7]
+        regions = [15,26,28,25,6,7,0,1,2,9,10,20, 21, 8,17,11,12,13,14]
+    start_time = time.time()
+
     fc_file='data/fc.txt'
     fc_tokens = extract_tokens(fc_file)
     file_name = 'data/osm_abbreviations_globe.csv'
@@ -126,11 +138,12 @@ def main():
                 new_abv += char + '.'
         abv_punk[new_abv]=key
     #load the osm place names
+    
     start_time = time.time()
 
     if args.osm:
 #        if args.F1 == 4:
-        osm_names = load_osm_names_fre('data/'+str(args.id)+str(args.epoch)+'.txt', [], aug_count = 1)
+        osm_names = load_osm_names_fre1('data/'+str(args.id)+str(args.epoch)+'.txt', [], aug_count = 1)
         osm_names = [item for item in osm_names if len(item) > 1]
         osm_names = set(osm_names)
 #        else:
@@ -138,7 +151,7 @@ def main():
 #            osm_names = set(osm_names)
     else:
         osm_names = []
-    print('osm_names', time.time()-start_time)
+    # print('osm_names', time.time()-start_time)
     start_time = time.time()
         
     if args.bool_general_check:
@@ -147,14 +160,14 @@ def main():
             general_place_list = load_osm_names_fre(general_file, [], aug_count = 1)
         else:
             general_place_list = []
-        candidate_file = 'data/candidates'+str(args.general_words)+'.txt'
-        if os.path.isfile(candidate_file):
-            candidate_words = load_osm_names_fre(candidate_file, [], aug_count = 1)
-            general_place_list.extend(candidate_words)
+        # candidate_file = 'data/candidates'+str(args.general_words)+'.txt'
+        # if os.path.isfile(candidate_file):
+        #     candidate_words = load_osm_names_fre(candidate_file, [], aug_count = 1)
+        #     general_place_list.extend(candidate_words)
     else:
         general_place_list = []
-    print('load_osm_names_fre', time.time()-start_time)
-        
+    # print('load_osm_names_fre', time.time()-start_time)
+    # print(general_place_list)
     # Write each dataframe to a different worksheet.
     for file in os.listdir("model/"):
         if args.id in file and '.pkl' in file:
@@ -169,7 +182,7 @@ def main():
             else:
                 epoch_str = file[15:len(file)][:-4]
                 epoch = int(epoch_str)
-            print('epoch:'+str(epoch))
+            # print('epoch:'+str(epoch))
             if epoch == args.epoch:
                 for r_idx, region in enumerate(regions):
                     F1, P,R = place_tagging(int(args.input == 1), time_str,obj,args.thres1,args.id,\

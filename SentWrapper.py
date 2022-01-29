@@ -37,6 +37,9 @@ top_k = 300
 return_top_k = 40
 DESC_FILE="data/common_desc2.txt"
 TWEET_REMOVE_FILE="data/tweet_desc_remove.txt"
+MASK_TAG2 = "[MASK]"
+TWEET_MASK_TAG = '<mask>'
+DISPATCH_MASK_TAG = "entity"
 
 def hasNumbers(inputString):
     return bool(re.search(r'\d', inputString))
@@ -64,7 +67,7 @@ def softmax(x):
     return e_x / e_x.sum()
 
 class SentWrapper:
-    def __init__(self):
+    def __init__(self,context_model=0,intrinsic_model=0):
 #        self.tokenizer = AutoTokenizer.from_pretrained("vinai/bertweet-base",do_lower_case=False)
 #        self.model = AutoModel.from_pretrained("vinai/bertweet-base")
 #        st = time.time()
@@ -85,43 +88,60 @@ class SentWrapper:
         self.descs = read_descs(DESC_FILE)
 #        print('read_descs', time.time()-st)
 #        st = time.time()
-
+        self.context_model = context_model
         self.tweet_rm_descs = read_descs(TWEET_REMOVE_FILE)
 #        print('tweet_rm_descs', time.time()-st)
+        if not intrinsic_model:
+            self.unmasker = pipeline('fill-mask', model='bert-large-cased-whole-word-masking',top_k=top_k)
+        else:
+            self.unmasker = pipeline('fill-mask', model='distilbert-base-uncased',top_k=top_k)
+
 #        st = time.time()
-
-        self.BERTweet = RobertaModel.from_pretrained('BERTweet_base_fairseq', checkpoint_file='model.pt')
-#        print('self.BERTweet', time.time()-st)
-#        st = time.time()
-
-        self.BERTweet.eval()  # disable dropout (or leave in train mode to finetune)
-#        print('.eval()', time.time()-st)
-#        st = time.time()
-
-#        print('eval')
-#        pdb.set_trace()
-        self.unmasker = pipeline('fill-mask', model='bert-large-cased-whole-word-masking',topk=top_k)
-        parser = options.get_preprocessing_parser()
-
-        parser.add_argument('--bpe-codes', type=str, help='path to fastBPE BPE', default="BERTweet_base_fairseq/bpe.codes") 
-        args, unknown = parser.parse_known_args()
-        self.BERTweet.bpe = fastBPE(args) #Incorporate the BPE encoder into BERTweet
-#
-#        self.bert_model = AutoModelWithLMHead.from_pretrained("bert-large-cased-whole-word-masking")
-#        print('self.bert_model', time.time()-st)
-#        st = time.time()
-
-        #pdb.set_trace()
-    def punct_sentence_simple(self,text):
+        if not context_model:
+            self.BERTweet = RobertaModel.from_pretrained('BERTweet_base_fairseq', checkpoint_file='model.pt')
+    #        print('self.BERTweet', time.time()-st)
+    #        st = time.time()
+    
+            self.BERTweet.eval()  # disable dropout (or leave in train mode to finetune)
+            parser = options.get_preprocessing_parser()
+            parser.add_argument('--bpe-codes', type=str, help='path to fastBPE BPE', default="BERTweet_base_fairseq/bpe.codes") 
+            args, unknown = parser.parse_known_args()
+            self.BERTweet.bpe = fastBPE(args) #Incorporate the BPE encoder into BERTweet
+        elif context_model==1:
+            self.context_unmasker = pipeline('fill-mask', model='bert-large-cased-whole-word-masking',top_k=top_k)
+        elif context_model==2:
+            self.context_unmasker = pipeline('fill-mask', model='roberta-large', top_k=top_k)
+        elif context_model == 3:
+            self.context_unmasker = pipeline('fill-mask', model='albert-large-v2', top_k=top_k)
+        elif context_model==4:
+            self.context_unmasker = pipeline('fill-mask', model='distilbert-base-uncased', top_k=top_k)
+            
+    def punct_sentence_simple(self,text,bool_context=0):
         result = []
         result_probs = []
         debug_count = 0
-        topk_filled_outputs = self.unmasker(text)
+        if bool_context:
+            if self.context_model != 2:
+                text = text.replace(TWEET_MASK_TAG,MASK_TAG2)
+            topk_filled_outputs = self.context_unmasker(text)
+        else:
+            text = text.replace(DISPATCH_MASK_TAG,MASK_TAG2)
+            topk_filled_outputs = self.unmasker(text)
 #        print('punct_sentence_simple unmasker: ', time.time()-start_time)
 #        start_time = time.time()
-
+        # print(text)
+        predicted_words = []
+        for candidate in topk_filled_outputs:
+            predicted_words.append(candidate['token_str'])
+        # print('predicted_words',predicted_words)
         for candidate in topk_filled_outputs:
             new_token = candidate['token_str']
+            if self.context_model == 3:
+                new_token = new_token[1:len(new_token)]
+            elif self.context_model == 2:
+                new_token = new_token[1:len(new_token)]
+            else:
+                new_token = new_token
             if set(new_token).difference(ascii_letters + digits) or (new_token.lower() \
                    in self.tweet_rm_descs) or new_token.isdecimal() or new_token in char_list \
                    or (4 > len(new_token)): #or hasNumbers(new_token)
@@ -164,10 +184,6 @@ class SentWrapper:
                  result.append(new_token)
                  result_probs.append(candidate[1])
                  debug_count += 1
-#            k += 1
-#            if (k >= top_k):
-#                break
-##                    print(result)
         if len(result) < 10:
             return ['0'], [1]
         else:

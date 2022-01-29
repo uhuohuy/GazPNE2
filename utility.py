@@ -6,10 +6,13 @@ import numpy as np
 import re
 import pdb
 from collections import OrderedDict
-category_words = ['mt', 'ottawa', 'spur', 'pwy', 'stn', 'hollow', 'hkb', 'farm', 'riv', 'mdws',  'pond', 'hill', 'highway', 'hall', 'airport', 'canal', '\
+PERSON_POS_ADV = ['^','NNP','NNPS']
+long_places_pos = ['^','$','CD','NNP','NNPS']
+#'spring', 'ottawa',
+category_words = ['mt',  'spur', 'pwy', 'stn', 'hollow', 'hkb', 'farm', 'riv', 'mdws',  'pond', 'hill', 'highway', 'hall', 'airport', 'canal', '\
 vsta', 'plz', 'aprt', 'pkwy', 'cen', 'md', 'temple', 'pnt', 'vy', 'mnr', 'beck', 'flat', 'tce', 'bch', 'crt', 'lake', 'av', 'blvd', 'reservoir', \
 'canyon', 'lk', 'terrace', 'beach', 'crescent', 'dr', 'crk', 'academy', 'street', 'bri', 'centre', 'co', 'hwy', 'range', 'bdge', 'lane',\
-'ridge', 'nw', 'pl', 'lower', 'spring', 'island', 'club', 'gr', 'ranch', 'ldg', 'upr', 'colony', 'court', 'west', 'upper', 'grange', \
+'ridge', 'nw', 'pl', 'lower',  'island', 'club', 'gr', 'ranch', 'ldg', 'upr', 'colony', 'court', 'west', 'upper', 'grange', \
 'northeast', 'bay', 'fd', 'field', 'cir', 'southwest', 'ms', 'manor', 'crss', 'gte', 'south', 'boulevard', 'cove', 'cottage', 'ri', 'gdn', 'rd', \
 'croft', 'road', 'cft', 'trl', 'grove', 'lr', 'city', 'br', 'hospital', 'link', 'ln', 'trail', 'park', 'crest', 'state', 'chase', 'top', 'market', 'university',\
  'se', 'cr', 'mtn', 'northwest', 'brook', 'cres', 'wy', 'vst', 'tn', 'pe', 'pt', 'np', 'gn', 'dale', 'lwr', 'mountain', 'haven', 'bank', \
@@ -62,6 +65,27 @@ def load_embeding(emb_file):
     glove = {w: vectors[word2idx[w]] for w in words}
     return glove,emb_dim
 
+def load_embeding1(emb_file):
+    # words = []
+    idx = 0
+    word2idx = {}
+    glove = {}
+    with open(emb_file, 'rb') as f:
+        for l in f:
+            line = l.split()
+            if len(line) > 5:
+                word = line[0]
+                # words.append(word)
+                word2idx[word] = idx
+                idx += 1
+                vect = [float(line[i]) for i in range(1,len(line))]#np.array(line[1:]).astype(np.float)
+                # vectors.append(vect)
+                glove[word]=vect
+    emb_dim = len(vect)
+    
+    # glove = {w: vectors[word2idx[w]] for w in words}
+    return glove,emb_dim
+
 def load_bigram_model(bigram_file):
     bigram_model = {}
 
@@ -71,6 +95,15 @@ def load_bigram_model(bigram_file):
             if len(line) == 3:
                 bigram_model[(line[0],line[1])] = float(line[2])
     return bigram_model
+
+def load_bigram_model1(bigram_file):
+    bigram_model = {}
+    with open(bigram_file, 'rb') as f:
+        for l in f:
+            line = l.decode().split()
+            bigram_model[(line[0],line[1])] = float(line[2])
+    return bigram_model
+
 
 def save_bigram_model(listOfBigrams,file_name):
     file = open(file_name, 'w')
@@ -137,67 +170,6 @@ def sub_lists_adv(list1, list_index, max_len):
                 sublist_index.append(sub_index)
                 sublist.append(sub)
     return sublist,sublist_index
-
-def place_context(detected_offsets, ori_offset,  pos_list):
-    bool_inser = 0
-#    if len(ori_offset) > max_words:
-    pla_ctx_tags
-    limited_x = 0
-    limited_y = len(ori_offset)
-    PLA_ID = 'DLRAAA'
-    place_contexs = []
-    place_contex = []
-    pla_index = []
-    for i in range(limited_x, limited_y):
-        s = ori_offset[i]
-            
-#    for i, s in enumerate(ori_offset):
-        for j, detected_offset in enumerate(detected_offsets):
-            if s[1] >= detected_offset[0] and s[1] <= detected_offset[1] and \
-                s[2] >= detected_offset[0] and s[2] <= detected_offset[1] :
-                if j not in pla_index:
-                    bool_inser = 1
-                    pla_index.append(j)
-                else:
-                    bool_inser += 1
-                break
-        if bool_inser==1:
-            place_contex.append((PLA_ID,'X'))
-        elif bool_inser==0:
-            if pos_list[i] in pla_ctx_tags:
-                place_contex.append((s[0].lower(),'X'))
-            else:
-                if not place_contex and bool_inser:
-                    place_contexs.append(place_contex)
-                    place_contex = []
-                    bool_inser = 0
-                else:
-                    place_contex = []
-                    bool_inser = 0
-
-    if place_contex and bool_inser:
-        place_contexs.append(place_contex)
-    return place_contexs
-
-
-def captalize(offsets, full_offset, tag_lists):
-    new_off = []
-    for s in full_offset:
-        bool_cap = 0
-        for i, suboff in enumerate(offsets):
-            for j, subsuboff in enumerate(suboff):
-                if s[1] >= subsuboff[0] and s[1] <= subsuboff[1] and \
-                   s[2] >= subsuboff[0] and s[2] <= subsuboff[1]:
-                       if tag_lists[i][j][1] in CAP:
-                           bool_cap = 1
-                       break
-            if bool_cap:
-                break
-        if bool_cap:
-            new_off.append(tuple([s[0], s[1], s[2]])) #.capitalize()
-        else:
-            new_off.append(tuple([s[0], s[1], s[2]]))
-    return new_off
 
 
 
@@ -498,6 +470,47 @@ def load_osm_names_fre(pos_f, fre_words, aug_count = 1, return_gen = 0):
         return pos_training_data, general_places
     else:
         return pos_training_data
+
+'''load place names from a file'''    
+def load_osm_names_fre1(pos_f, fre_words, aug_count = 1, return_gen = 0):
+    pos_training_data = []
+    general_places = set()
+    with codecs.open(pos_f, 'r',encoding='utf-8') as file:
+        for line in file:
+            # line = unicodedata.normalize('NFKD', line).encode('ascii','ignore').decode("utf-8") 
+            # line = line.strip()
+            corpus = line.split()
+            if len(corpus) == 0:
+                continue
+            # row_nobrackets = re.sub("[\(\[].:;*?[\)\]]", "", line)         
+            # corpus = [word.lower() for word in re.split("[. #,&\"\',’]",row_nobrackets)]
+            # corpus = [word  for word in corpus if word]
+            # corpus = [replace_digs(word) for word in corpus]
+            pos_training_data.append(tuple(corpus))
+    return pos_training_data
+
+
+def load_word_index(index_file):
+    word2idx = {}
+    max_char_len = 0
+    with open(index_file, 'rb') as f:
+        for l in f:
+            line = l.decode().split()
+            word = line[0]
+            if len(word) > max_char_len:
+                max_char_len = len(word)
+            if len(line)== 1:
+                # print('errors in vocab list')
+                # print(line)
+                # print(len(word2idx))
+                word2idx['jiyougguexjcgsnoword'] = int(line[0])
+            else:
+                if line[0] in word2idx.keys():
+                    # print('appear before:',line[0])
+                    word2idx[line[0]+str(len(word2idx))] = int(line[1])
+                else:
+                    word2idx[line[0]] = int(line[1])
+    return word2idx, max_char_len
 
 '''load place names from a file'''    
 def string2pla(rawstr):

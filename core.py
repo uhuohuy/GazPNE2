@@ -3,8 +3,6 @@ Copyright 2017 Hussein S. Al-Olimat, hussein@knoesis.org
 
 This software is released under the GNU Affero General Public License (AGPL)
 v3.0 License.
-
-Modified by: Xuke Hu xuke.hu@gmail.com
 #############################################################################'''
 
 import re
@@ -20,6 +18,11 @@ import copy
 import pdb
 load()
 spell = SpellChecker()
+import nltk
+from nltk.tag.stanford import StanfordNERTagger
+PATH_TO_JAR='stanford-ner-2015-04-20.jar'
+PATH_TO_MODEL = 'english.all.3class.distsim.crf.ser.gz'
+tagger = StanfordNERTagger(model_filename=PATH_TO_MODEL,path_to_jar=PATH_TO_JAR, encoding='utf-8')
 
 import Twokenize
 
@@ -32,6 +35,19 @@ printable = set(string.printable)
 url_re = r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*' # urls regular expression
 mentions_re = r"@[\w\.]+" # mentions regular expression
 
+def get_removed_indices_mention(tweet):
+    # Contains the indices of characters that were removed from the oringial text
+    removedIndices = set()
+
+    for r in [ mentions_re]:
+        for m in [(m.start(),m.end()) for m in re.finditer(r, tweet)]:
+            # add all character offsets to the set of removed indices
+            if r in [mentions_re]:
+                removedIndices.update(set(range(m[0]+1,m[1])))
+            else:
+                removedIndices.update(set(range(m[0],m[1])))
+
+    return removedIndices
 
 
 
@@ -169,6 +185,24 @@ def findall(p, s):
         i = s.find(p, i + 1)
 
 ################################################################################
+def align_adv(raw_tokens, raw_string):
+    tokens = list()
+
+    last_index = 0
+
+    for token in raw_tokens:
+        matches = [(raw_string[i:len(token[0]) + i], i, len(token[0]) + i - 1,token[1])
+                   for i in findall(token[0], raw_string)]
+
+        for match in matches:
+            if match[1] >= last_index:
+                last_index = match[2]
+                tokens.append(match)
+                break
+
+    return tokens
+
+################################################################################
 
 def align_and_split(raw_string, preprocessed_string):
     '''Aligns the offsets of the preprocessed tweet with the raw tweet to retain
@@ -266,9 +300,9 @@ def extract_sim(tweet, keys, full=0, abb_dict={}):
 #    print(url_offsets)
     query = tweet; str(tweet.lower())
     remove_men = 0
-    preprocessed_query = preprocess_tweet(query,keys, remove_men)
+    preprocessed_query = preprocess_tweet(query, keys, remove_men)
 #    pdb.set_trace()
-
+    # print(preprocessed_query)
     if remove_men:
 #    print(preprocessed_query)c
         query_tokens = align_and_split(query, preprocessed_query)
@@ -288,14 +322,14 @@ def extract_sim(tweet, keys, full=0, abb_dict={}):
 #                    ori_query_tokens.insert(off_i+1,url)
 #                    break
         
-
+    # print(query_tokens)
     if full:
         return_query_tokens = copy.deepcopy(ori_query_tokens)
         
     hashtag_offsets = findhashtag_offset(query_tokens)
 #    pdb.set_trace()
 
-    #print(query_tokens)
+    # print(query_tokens)
     # --------------------------------------------------------------------------
     # prune the tree of locations based on the exisitence of stop words
     # by splitting the query into multiple queries
@@ -308,7 +342,7 @@ def extract_sim(tweet, keys, full=0, abb_dict={}):
     comma_stop_exc = ['st','t','T','ST','St','s','n','e','w','se', 'ne']
 
     stop_in_query =set(
-        ['[', ']','/',',','@','&','#','$','%', '(', ')', '*', '+','.', '|', '!', ';', ':', '<', '>', "newline"]) #"#", 
+        ['[', ']','/',',','@','..','--','"','&','#','$','%', '(', ')', '*', '+','.', '|', '!', ';', ':', '<', '>', "newline"]) #"#", 
     # remove stops from query
     stop_index = []
     del_index = []
@@ -316,7 +350,7 @@ def extract_sim(tweet, keys, full=0, abb_dict={}):
     insert_tuple = []
     token_len = len(query_tokens)
     for index, token in enumerate(query_tokens):
-        if token[0] in stop_in_query:
+        if token[0] in stop_in_query or '..' in token[0] or '--' in token[0]:
            if not (token[0] == '.' and query_tokens[index-1][0] in comma_stop_exc):
                stop_index.append(index)
             #query_tokens[index] = ()
@@ -524,7 +558,13 @@ if __name__== "__main__":
         for i, char in enumerate(key):
                 new_abv += char + '.'
         abv_punk[new_abv]=key
-    String = "RT @GlobalGrind: The Most Uplifting Pictures's From The Boston Marathon Twin Bombings http://t.co/my6JSr0q44\\NY&lt;3 B http://t.co/9eO8vnsWDq"
-    String='Packed beaches   in MA = 2nd wave of Covid-19 should start in about 2 weeks in Massachusetts...'
+    String = "Oh @and they've made a Facebook now if you search ... West St Recovery , you can help get underserved populations back on their feet . harve"
+    # String='Packed beaches   in MA = 2nd wave of Covid-19 should start in about 2 weeks in Massachusetts...'
     sub_output,sub_off_set,return_query_tokens, hashtag_offsets,dis_split = extract_sim(String,[], 1, abv_punk)
-    print(sub_output,sub_off_set, return_query_tokens, hashtag_offsets,dis_split)
+    print(return_query_tokens) #sub_output,sub_off_set, return_query_tokens, hashtag_offsets,dis_split)
+    
+    # sentence = "IMAGES Showing the destroyed Trout Street Restaurants close to Back Porch . PortAransas Texas HurricaneHarvey"
+    # words = nltk.word_tokenize(sentence) 
+    # print(words)
+    # tagged = tagger.tag(words)
+    # print(tagged)
