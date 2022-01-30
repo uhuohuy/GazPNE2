@@ -45,23 +45,6 @@ tweets = ['Associates at the Kuykendahl Rd & Louetta Rd . store in Spring , TX g
 locations = gazpne2.extract_location(tweets)
 ```
 
-‘’’ python
-‘’’
-
-`from main import GazPNE2`
-`gazpne2=GazPNE2()`
-
-`tweets = ['Associates at the Kuykendahl Rd & Louetta Rd . store in Spring , TX gave our customers a reason to smile (: tayytink )','Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area ? Harve ']`
-
-
-> from main import GazPNE2
-> 
-> 
-> 
-> 
-> 
-> locations = gazpne2.extract_location(tweets)
-
 Note that it might take around 1 minute to load required models and data. 
 
 Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
