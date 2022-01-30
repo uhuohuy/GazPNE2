@@ -37,7 +37,7 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 
 
 ### Use the code
-#### A snippet of example code is below:
+A snippet of example code is as below. It is faster to input multiple tweets at once than one single tweet. 
 
 ```python
 from main import GazPNE2
@@ -52,14 +52,20 @@ print(locations)
 1: [{'LOC': 'Corpus Christi Street', 'offset': (38, 58)}, {'LOC': 'Hwy 35', 'offset': (64, 69)}, 
 {'LOC': 'Rockport', 'offset': (0, 7)}, {'LOC': 'TX', 'offset': (9, 10)}]}'''
 ```
-Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
+
+To extract locations from txt file, execute the following command. In the txt file, each line corresponds to a tweet message.
 
 > python -u main.py --input=0 --input_file=data/test.txt
 
 
-Test our manually annotated data (3000 tweets): Set <*input*> to 2.
+To test our manually annotated datasets (3000 tweets), execute the following command.
 
-Test public datasets: Set <*input*> to 4, then you will get the result of partial datasets since some are not publicly available and should be requested from the authors of the data.
+> python -u main.py --input=2
+
+To test public datasets (19), execute the following command. You will get the result of partial datasets since some are not publicly available.
+
+> python -u main.py --input=4
+> 
 datasets [a,b,c]  can be obtained from https://rebrand.ly/LocationsDataset.
 datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-open-dataset/.
 datasets [g,h] can be obtained by contacting the [author](https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
