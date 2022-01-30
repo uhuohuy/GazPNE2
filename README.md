@@ -36,17 +36,19 @@ Python 3.7 is required
 In the first run, the pretrained BERT models will be automaticlly downloaded and cached on the local drive.
 
 
-### Run the code
+### Use the code
 
-Note that it might take  1 minute to load required models and data.
+> from main import GazPNE2
+> gazpne2=GazPNE2()
+> tweets = ['Associates at the Kuykendahl Rd & Louetta Rd . store in Spring , TX gave our customers a reason to smile (: tayytink )','Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area ? Harve ']
+> entities = gazpne2.extract_location(tweets)
+
+Note that it might take around 1 minute to load required models and data. 
+
+Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
 
 > python -u main.py --input=0 --input_file=data/test.txt
 
-To execute below command in case of a jave error.  
-
-> spack load openjdk
-
-Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
 
 Test our manually annotated data (3000 tweets): Set <*input*> to 2.
 
@@ -54,4 +56,9 @@ Test public datasets: Set <*input*> to 4, then you will get the result of partia
 datasets [a,b,c]  can be obtained from https://rebrand.ly/LocationsDataset.
 datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-open-dataset/.
 datasets [g,h] can be obtained by contacting the [author](https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
+
+To execute below command in case of a jave error.  
+
+> spack load openjdk
+
 
