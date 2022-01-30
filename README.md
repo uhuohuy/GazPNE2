@@ -43,15 +43,16 @@ A snippet of example code is as below.
 from main import GazPNE2
 gazpne2=GazPNE2() # This will take around 1 minute to load models
 tweets = ["Associates at the Kuykendahl Rd & Louetta Rd. store in Spring, TX gave our customers a reason to smile",\
-"Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area? Harve"]
+"Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area? #houstonflood"]
 # It is faster to input multiple tweets at once than one single tweet mutiple times. 
 locations = gazpne2.extract_location(tweets)
 print(locations)
 '''This will output:
-{0: [{'LOC': 'Kuykendahl Rd', 'offset': (18, 30)}, {'LOC': 'Louetta Rd', 'offset': (34, 43)}, 
+{0: [{'LOC': 'Kuykendahl Rd', 'offset': (18, 30)}, {'LOC': 'Louetta Rd', 'offset': (34, 43)},
 {'LOC': 'Spring', 'offset': (55, 60)}, {'LOC': 'TX', 'offset': (63, 64)}], 
-1: [{'LOC': 'Corpus Christi Street', 'offset': (38, 58)}, {'LOC': 'Hwy 35', 'offset': (64, 69)}, 
-{'LOC': 'Rockport', 'offset': (0, 7)}, {'LOC': 'TX', 'offset': (9, 10)}]}'''
+1: [{'LOC': 'Corpus Christi Street', 'offset': (38, 58)}, {'LOC': 'Hwy 35', 'offset': (64, 69)},
+{'LOC': 'Rockport', 'offset': (0, 7)}, {'LOC': 'TX', 'offset': (9, 10)}, {'LOC': 'houston', 'offset': (78, 84)}]}
+'''
 ```
 
 To extract locations from txt file, execute the following command. In the txt file, each line corresponds to a tweet message.
