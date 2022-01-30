@@ -74,5 +74,6 @@ datasets [g,h] can be obtained by contacting the [author](https://www.researchga
 To execute below command in case of a jave error.  
 
 > spack load openjdk
-
+## Contact
+If you have any questions, feel free to contact Xuke Hu via xuke.hu@dlr.de
 
