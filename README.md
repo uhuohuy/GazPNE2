@@ -37,6 +37,7 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 
 
 ### Use the code
+`from main import GazPNE2`
 
 > from main import GazPNE2
 > 
