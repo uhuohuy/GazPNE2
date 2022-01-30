@@ -18,11 +18,6 @@ import copy
 import pdb
 load()
 spell = SpellChecker()
-import nltk
-from nltk.tag.stanford import StanfordNERTagger
-PATH_TO_JAR='stanford-ner-2015-04-20.jar'
-PATH_TO_MODEL = 'english.all.3class.distsim.crf.ser.gz'
-tagger = StanfordNERTagger(model_filename=PATH_TO_MODEL,path_to_jar=PATH_TO_JAR, encoding='utf-8')
 
 import Twokenize
 

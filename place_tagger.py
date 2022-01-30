@@ -1,4 +1,3 @@
-from Model import C_LSTM
 import csv
 import json, re
 import torch
@@ -52,6 +51,8 @@ category_words_raw = [word[0] for word in category_words_raw]
 category_words_simple = [item for item in category_words]
 category_words.extend(category_words_raw)
 category_words = [item for item in category_words if item != 'nyc']
+category_words_tuple = [tuple([word]) for word in category_words]
+# general_words = list(set(general_words).difference(set(category_words_tuple)))
 
 def lowerize(offsets, full_offset, tag_lists):
     new_off = []
@@ -328,7 +329,7 @@ def align(tags, full_offset):
                 last_index += 1
     return new_offsets
 
-def load_cache_from_file(region,word2idx,abv_punk,input_file):
+def load_cache_from_file(region,word2idx,abv_punk,input_file,strings=[]):
 #    bert_cache = {}
 #    ignored_place_named = {}
 #    ignored_place_named[6] = [('new','york'),('nyc',),('new','york','city'),('ny')]
@@ -490,9 +491,12 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file):
                             hashtag_offsets = []
                             sentences_lowcases = [[x.lower() for x in y] for y in sentences]
                             tweet_cache[key]=[[],[],sentences,offsets,full_offset,sentences_lowcases,tweet,hashtag_offsets,dis_split,[],[]]
-    elif region == 49:
-        file1 = open(input_file, 'r')
-        Lines = file1.readlines()
+    elif region == 49 or region == 100:
+        if region == 100:
+            Lines = strings
+        else:
+            file1 = open(input_file, 'r')
+            Lines = file1.readlines()
         for i, tweet in  enumerate(Lines):
             tweet = tweet.strip()
             if not tweet:
@@ -649,6 +653,7 @@ def pure_ent(target_ent):
 def is_overlapping(x1,x2,y1,y2):
     return max(x1,y1) <= min(x2,y2)
 
+
 def filter_invalid_candidates(sub_index, all_sub_lists, pos_lists,cur_off, stanza_ents):
     invalids = []
     for i, index in enumerate(sub_index):
@@ -663,6 +668,7 @@ def filter_invalid_candidates(sub_index, all_sub_lists, pos_lists,cur_off, stanz
     all_sub_lists = [all_sub_lists[i] for i in range(len(all_sub_lists)) if i not in invalids]
     pos_lists = [pos_lists[i] for i in range(len(pos_lists)) if i not in invalids]
     return sub_index, all_sub_lists,pos_lists
+
 
 def filter_invalid_candidates_adv(sub_index, all_sub_lists, pos_lists,cur_off, stanza_ents):
     invalids = []
@@ -692,6 +698,7 @@ def filter_invalid_candidates_adv(sub_index, all_sub_lists, pos_lists,cur_off, s
     all_sub_lists = [all_sub_lists[i] for i in range(len(all_sub_lists)) if i not in invalids]
     pos_lists = [pos_lists[i] for i in range(len(pos_lists)) if i not in invalids]
     return sub_index, all_sub_lists,pos_lists
+
 
 def bool_expansion(sub_index,i,j,lastfix_places_words,final_sub_sen,tag_lists,spatial_indicators,prefix_place_words,exp_pos_list):
     if (is_Sublist(sub_index[j],sub_index[i])):
@@ -858,94 +865,100 @@ def general_check(bert_cache,obj,cur_off_pla,special_ent_t,\
             return 0, bert_cache        
 
 
-def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,hc,hidden,region,lstm_dim,epoch,filter_l,\
-             bool_remove,osm_names, emb=1, loc_thres=0.1,\
+def place_tagging(no_bert, time_str,gazpne2, thres, region,\
+              loc_thres=0.1,\
              ent_thres=0.3, context_thres=0.2,  weight=1, \
              bool_fast = 0, special_ent_t = 0.4, \
-             general_words=[],abv_punk={}, merge_thres=0.4, \
-            fc_tokens=[],fc_ratio=0.4, input_file='data/test.txt',abb_context_thres=0.2, \
-                num_context_thres=0.2, single_person_c_t=0.2, bool_debug=1,bool_formal=0):
+                 merge_thres=0.4, \
+            fc_ratio=0.4, input_file='data/test.txt',abb_context_thres=0.2, \
+                num_context_thres=0.2, single_person_c_t=0.2, bool_debug=1, bool_formal=0, strings=[]):
+    fc_tokens = gazpne2.fc_tokens
     fc_tokens = [item for item in fc_tokens if item not in category_words_simple]
-    postive_pro_t = thres
-    PAD_idx = 0
-    s_max_len = 10
-    bool_mb_gaze = osm_word_emb
-    bigram_file = 'model/'+model_ID+'-bigram.txt'
-    # hcfeat_file = 'model/'+model_ID+'-hcfeat.txt'
-    START_WORD = 'hhh' #'start_string_taghu' # 'hhh'
-    start_time = time.time()
-    bigram_model = load_bigram_model(bigram_file)
-    # bigram_model = {}
-    if bool_debug:
-        print('load_bigram_model', time.time()-start_time)
     bool_special_check = 1
-    if bool_mb_gaze:
-        gazetteer_emb_file = 'data/osm_vector'+str(osmembed)+'.txt'
-        gazetteer_emb,gaz_emb_dim = load_embeding(gazetteer_emb_file)
-    else:
-        gazetteer_emb = []
-        gaz_emb_dim = 0
-    category_words_tuple = [tuple([word]) for word in category_words]
-    # general_words = list(set(general_words).difference(set(category_words_tuple)))
-    general_words.extend(['0','00','000','0000'])
-    general_words = list(set(general_words).difference(set([tuple(['s'])])))
-    # print(general_words)
+    postive_pro_t = thres
     result_mids = []
     truth_all = []
-    file_name = 'data/osm_abbreviations_globe.csv'
-    abbr_dict = abbrevison1(file_name)
-    start_time = time.time()
+    abv_punk = gazpne2.abv_punk
+    general_words = gazpne2.general_words
+    # general_words.extend(['0','00','000','0000'])
+    # general_words = list(set(general_words).difference(set([tuple(['s'])])))
+    abbr_dict = gazpne2.abbr_dict
+    word2idx = gazpne2.word2idx
+#     PAD_idx = 0
+#     s_max_len = 10
+#     bool_mb_gaze = osm_word_emb
+#     bigram_file = 'model/'+model_ID+'-bigram.txt'
+#     # hcfeat_file = 'model/'+model_ID+'-hcfeat.txt'
+#     START_WORD = 'hhh' #'start_string_taghu' # 'hhh'
+#     start_time = time.time()
+#     bigram_model = load_bigram_model(bigram_file)
+#     # bigram_model = {}
+#     if bool_debug:
+#         print('load_bigram_model', time.time()-start_time)
+#     if bool_mb_gaze:
+#         gazetteer_emb_file = 'data/osm_vector'+str(osmembed)+'.txt'
+#         gazetteer_emb,gaz_emb_dim = load_embeding(gazetteer_emb_file)
+#     else:
+#         gazetteer_emb = []
+#         gaz_emb_dim = 0
+#     # category_words_tuple = [tuple([word]) for word in category_words]
+#     # general_words = list(set(general_words).difference(set(category_words_tuple)))
+#     # print(general_words)
+#     file_name = 'data/osm_abbreviations_globe.csv'
+#     abbr_dict = abbrevison1(file_name)
+#     start_time = time.time()
 
-    # char_hc_emb,_ = load_embeding(hcfeat_file)
-    char_hc_emb = {}
-    if bool_debug:
-        print('hcfeat_file', time.time()-start_time)
-    start_time = time.time()
+#     # char_hc_emb,_ = load_embeding(hcfeat_file)
+#     char_hc_emb = {}
+#     if bool_debug:
+#         print('hcfeat_file', time.time()-start_time)
+#     start_time = time.time()
 
-    word_idx_file = 'model/'+model_ID+'-vocab.txt'
-    word2idx, max_char_len = load_word_index(word_idx_file)
-    if bool_debug:
-        print('load_word_index', time.time()-start_time)
-    start_time = time.time()
+#     word_idx_file = 'model/'+model_ID+'-vocab.txt'
+#     word2idx, max_char_len = load_word_index(word_idx_file)
+#     if bool_debug:
+#         print('load_word_index', time.time()-start_time)
+#     start_time = time.time()
 
-    max_char_len = 20
-    if emb==4:
-#        BertEmbed = BertEmbeds('data/uncased_vocab.txt', 'data/uncased_bert_vectors.txt')
-#        glove_emb, emb_dim = BertEmbed.load_bert_embedding()
-        glove_emb = {}    
-        emb_dim = 1024
-    else:
-#        glove_emb_file = 'data/glove.6B.50d.txt'
-#        glove_emb, emb_dim = load_embeding(glove_emb_file)
-        glove_emb = {}    
-        emb_dim = 50
-#    print('load_embeding', time.time()-start_time)
+#     max_char_len = 20
+#     if emb==4:
+# #        BertEmbed = BertEmbeds('data/uncased_vocab.txt', 'data/uncased_bert_vectors.txt')
+# #        glove_emb, emb_dim = BertEmbed.load_bert_embedding()
+#         glove_emb = {}    
+#         emb_dim = 1024
+#     else:
+# #        glove_emb_file = 'data/glove.6B.50d.txt'
+# #        glove_emb, emb_dim = load_embeding(glove_emb_file)
+#         glove_emb = {}    
+#         emb_dim = 50
+# #    print('load_embeding', time.time()-start_time)
 
-    weight_l = emb_dim+gaz_emb_dim+6
-    weights_matrix = np.zeros((len(word2idx.keys()), weight_l))
-    weights_matrix= torch.from_numpy(weights_matrix)
-    tag_to_ix = {"p": 0, "n": 1}
-    HIDDEN_DIM = hidden
-    model_path = 'model/'+model_ID+'epoch'+str(epoch)+'.pkl'
-    DROPOUT = 0.5
-    flex_feat_len = 3
-    fileter_l = filter_l
-    start_time = time.time()
+#     weight_l = emb_dim+gaz_emb_dim+6
+#     weights_matrix = np.zeros((len(word2idx.keys()), weight_l))
+#     weights_matrix= torch.from_numpy(weights_matrix)
+#     tag_to_ix = {"p": 0, "n": 1}
+#     HIDDEN_DIM = hidden
+#     model_path = 'model/'+model_ID+'epoch'+str(epoch)+'.pkl'
+#     DROPOUT = 0.5
+#     flex_feat_len = 3
+#     fileter_l = filter_l
+#     start_time = time.time()
 
-    model = C_LSTM(weights_matrix, HIDDEN_DIM, fileter_l, lstm_dim, len(tag_to_ix), flex_feat_len, DROPOUT)
-    model.load_state_dict(torch.load(model_path,map_location='cpu'))
-    model.eval()
-    if bool_debug:
-        print('load_state_dict', time.time()-start_time)
-    np_word_embeds = model.embedding.weight.detach().numpy() 
+#     model = C_LSTM(weights_matrix, HIDDEN_DIM, fileter_l, lstm_dim, len(tag_to_ix), flex_feat_len, DROPOUT)
+#     model.load_state_dict(torch.load(model_path,map_location='cpu'))
+#     model.eval()
+#     if bool_debug:
+#         print('load_state_dict', time.time()-start_time)
+#     np_word_embeds = model.embedding.weight.detach().numpy() 
+    
     index_t = 0
 #    if no_bert:
 #        F=1
 #    else:
 #        F=4
-    raw_result_file = 'experiments/result_'+time_str+'m'+model_ID+'region'+str(region)+'epoch'+str(epoch)+'th'+str(thres)+'.txt'
+    raw_result_file = 'experiments/result_'+time_str+'m'+gazpne2.model_ID+'region'+str(region)+'th'+str(thres)+'.txt'
     save_file = open(raw_result_file,'w') 
-    save_file.write(model_path)
+    # save_file.write(model_path)
     save_file.write('\n')
     
     ignored_place_named = {}
@@ -965,10 +978,9 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
     hashtag_ignored_list = [21]
     mulit_hashtag_ignore = [18,19,20,21]
     bert_cache = {}
-
-    tweet_cache, valid_keys, temp_tags,total_tweet_count = load_cache_from_file(region,word2idx,abv_punk,input_file)
-
+    tweet_cache, valid_keys, temp_tags, total_tweet_count = load_cache_from_file(region,gazpne2.word2idx,gazpne2.abv_punk,input_file,strings)
     tweet_count = 0
+    total_return_results = {}
     for key in valid_keys:
         try:
             tweet_count += 1
@@ -1002,7 +1014,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                 
             truth_all.append(truth)
             tag_lists = temp_tags[key]
-            if not no_bert:
+            if not no_bert and region != 100:
                 print('#'*50)
                 print(str(tweet_count)+'-th tweet' )
                 print(tweet)
@@ -1060,7 +1072,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                     cur_off = offsets[idx]
                     # print(cur_off)
                     
-                    sub_index, all_sub_lists, pos_lists = extract_nouns_tweet(tag_lists[idx],s_max_len,dis_split, cur_off)
+                    sub_index, all_sub_lists, pos_lists = extract_nouns_tweet(tag_lists[idx],gazpne2.s_max_len,dis_split, cur_off)
                     sub_index, all_sub_lists, pos_lists = filterArticles(sentence,sub_index, all_sub_lists, pos_lists)
 
                     # print(sub_index)
@@ -1073,20 +1085,20 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                     index_t += 1
     #                    all_sub_lists, sub_index = sub_lists(sentence, s_max_len)
                     osm_probs = [0.1]*len(all_sub_lists)
-                    input_emb = np.zeros((len(all_sub_lists),s_max_len,emb_dim+gaz_emb_dim+6+flex_feat_len))
+                    input_emb = np.zeros((len(all_sub_lists),gazpne2.s_max_len,gazpne2.emb_dim+gazpne2.gaz_emb_dim+6+gazpne2.flex_feat_len))
                     for i, sub_sen in enumerate(all_sub_lists):
                         sub_sen = [replace_digs(word) for word in sub_sen]
                         sub_sen = [word.lower() for word in sub_sen]
-                        input_emb[i] = sentence_embeding(sub_sen, np_word_embeds,word2idx,glove_emb,\
-                                                  gazetteer_emb,s_max_len,emb_dim,\
-                                                  gaz_emb_dim,max_char_len,bool_mb_gaze,\
-                                                 PAD_idx,START_WORD,bigram_model,char_hc_emb,flex_feat_len)
-                        if tuple(sub_sen) in osm_names:
+                        input_emb[i] = sentence_embeding(sub_sen, gazpne2.np_word_embeds,gazpne2.word2idx,gazpne2.glove_emb,\
+                                                  gazpne2.gazetteer_emb,gazpne2.s_max_len,gazpne2.emb_dim,\
+                                                  gazpne2.gaz_emb_dim,gazpne2.max_char_len,gazpne2.bool_mb_gaze,\
+                                                 gazpne2.PAD_idx,gazpne2.START_WORD,gazpne2.bigram_model,gazpne2.char_hc_emb,gazpne2.flex_feat_len)
+                        if tuple(sub_sen) in gazpne2.osm_names:
                             osm_probs[i] = OSM_CONF
     
                     input_emb= torch.from_numpy(input_emb).float()
                     
-                    output = model.predict(input_emb)
+                    output = gazpne2.model.predict(input_emb)
                     _, preds_tensor = torch.max(output, 1)
                     pos_prob = torch.sigmoid(output).detach().numpy()
                     pos_prob = pos_prob[:,1]
@@ -1143,7 +1155,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                             if bool_debug:
                                               print('stanza_pob',all_sub_lists[i],pos_prob[i])
                                         else:
-                                              valid_loc, bert_cache = general_check(bert_cache,obj,cur_off_pla,\
+                                              valid_loc, bert_cache = general_check(bert_cache,gazpne2,cur_off_pla,\
                                                                                     special_ent_t,loc_thres,\
                                                                                     all_sub_lists[i],new_full_offset,\
                                                                                     pos_lists[i],bool_debug,weight)
@@ -1220,7 +1232,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                             masked_context_sentence = gen_mask_sentence2(cur_off_pla, new_full_offset, pos_lists[i])
                             if bool_debug:
                                 print(masked_context_sentence)
-                            context_ent_prob, context_ent_prob_gen,context_descs = obj.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug,bool_formal)
+                            context_ent_prob, context_ent_prob_gen,context_descs = gazpne2.context_cue_new(masked_context_sentence,1,cap_sen,'',bool_debug,bool_formal)
                             context_ent_prob = pure_ent(context_ent_prob)
                             if bool_debug:
                                 # print(all_sub_lists[i])
@@ -1230,7 +1242,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                             
                             bool_detected = fusion_strategy29({'LOC':0},context_ent_prob, ent_thres, \
                                                               context_thres, all_sub_lists[i], \
-                                                              abbr_dict.keys(), bool_general, \
+                                                              gazpne2.abbr_dict.keys(), bool_general, \
                                                               pos_lists[i], abb_context_thres, \
                                                               merge_thres,num_context_thres, \
                                                               single_person_c_t)
@@ -1248,7 +1260,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                     ent_prob = bert_cache[masked_sentence][0]
                                     ent_prob_gen = bert_cache[masked_sentence][1]
                                 else:
-                                    ent_prob, ent_prob_gen ,descs = obj.context_cue_new(masked_sentence,0,cap_sen, ori_masked_sen,bool_debug,bool_formal)
+                                    ent_prob, ent_prob_gen ,descs = gazpne2.context_cue_new(masked_sentence,0,cap_sen, ori_masked_sen,bool_debug,bool_formal)
                                     bert_cache[masked_sentence] =  [ent_prob,ent_prob_gen]
                                     if len(cap_sen)>1:
                                         ent_prob['LOC']+=0.15
@@ -1307,7 +1319,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
                                             if item.lower() not in word2idx.keys():
                                                 add_t = 0.1
                                                 break
-                                        valid_loc, bert_cache = general_check(bert_cache,obj,cur_off_pla,\
+                                        valid_loc, bert_cache = general_check(bert_cache,gazpne2,cur_off_pla,\
                                         special_ent_t,loc_thres+add_t,\
                                         all_sub_lists[i],new_full_offset,\
                                         pos_lists[i],bool_debug,weight,1)
@@ -1526,7 +1538,7 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
             # if bool_debug:
             #     print('stanford/stanza',new_places)
             for off, place in zip(new_offsets, new_places):
-                valid_loc, bert_cache = general_check(bert_cache,obj,off,\
+                valid_loc, bert_cache = general_check(bert_cache,gazpne2,off,\
                                             special_ent_t,loc_thres+0.1,\
                                             place,new_full_offset,\
                                             [],bool_debug,weight)
@@ -1539,11 +1551,22 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
 
             c_tp, c_fp, c_fn, place_detect_score = interset_num(detected_offsets,place_offset,detected_place_names,\
                                                                place_names,ignored_places, amb_place_offset, amb_place_names, cur_hash)
-            
+            detection_dicts = []
+            for i, item in enumerate(detected_place_names):
+                detection_dict = {}
+                place_str = ''
+                for j, w in enumerate(item):
+                    place_str += w
+                    if j != len(item)-1:
+                        place_str += ' '
+                detection_dict['LOC'] = place_str
+                detection_dict['offset'] = detected_offsets[i]
+                detection_dicts.append(detection_dict)
+            total_return_results[key]=detection_dicts
                 
                 # save_file.write('tp:'+str(c_tp)+' c_fp:'+str(c_fp)+' c_fn:'+str(c_fn))
             save_file.write('\n')
-            if not no_bert:
+            if not no_bert and region != 100:
                 print(detected_place_names)
                 print(detected_offsets)
     #                print(place_offset)
@@ -1568,16 +1591,18 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
             FP_count += c_fp
             FN_count += c_fn
         except BaseException as e:
+            total_return_results[key]=[]
             print(e)
             print('exception occurs')
     if TP_count+FP_count > 0 and TP_count+FN_count > 0:
         P = TP_count/(TP_count+FP_count) 
         R = TP_count/(TP_count+FN_count) 
         F = (2*P*R) / (P+R)
-        print(TP_count,FP_count,FN_count)
-        print('P',P,'R',R,'F',F)
-        print('true count:', true_count)
-        print('tweet count', total_tweet_count)
+        if region != 100:
+            print(TP_count,FP_count,FN_count)
+            print('P',P,'R',R,'F',F)
+            print('true count:', true_count)
+            print('tweet count', total_tweet_count)
         save_file.write('recall:' + str(R))
         save_file.write('\n')
         save_file.write('precision:' + str(P))
@@ -1601,8 +1626,9 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
         for item in detection_rate:
             save_file.write("%s\n" % item)
     else:
-        print(place_lens)
-        print(TP_count,FP_count,FN_count)
+        if region != 100:
+            print(place_lens)
+            print(TP_count,FP_count,FN_count)
         P = 0
         F = 0
         R = 0
@@ -1634,5 +1660,5 @@ def place_tagging(no_bert, time_str,obj, thres, model_ID, osmembed,osm_word_emb,
             wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
             for dic in truth_all:
                 wr.writerow(dic)
-    return F,P,R
+    return F,P,R,total_return_results
 
