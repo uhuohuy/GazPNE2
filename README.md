@@ -37,13 +37,16 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 
 
 ### Use the code
-`from main import GazPNE2`
+`from main import GazPNE2
+gazpne2=GazPNE2()
+tweets = ['Associates at the Kuykendahl Rd & Louetta Rd . store in Spring , TX gave our customers a reason to smile (: tayytink )','Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area ? Harve ']
+`
 
 > from main import GazPNE2
 > 
-> gazpne2=GazPNE2()
 > 
-> tweets = ['Associates at the Kuykendahl Rd & Louetta Rd . store in Spring , TX gave our customers a reason to smile (: tayytink )','Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area ? Harve ']
+> 
+> 
 > 
 > locations = gazpne2.extract_location(tweets)
 
