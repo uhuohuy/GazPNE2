@@ -44,7 +44,7 @@ from main import GazPNE2
 gazpne2=GazPNE2() # This will take around 1 minute to load models
 tweets = ["Associates at the Kuykendahl Rd & Louetta Rd. store in Spring, TX gave our customers a reason to smile",\
 "Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area? Harve"]
-# It is faster to input multiple tweets at once than one single tweet. 
+# It is faster to input multiple tweets at once than one single tweet mutiple times. 
 locations = gazpne2.extract_location(tweets)
 print(locations)
 '''This will output:
