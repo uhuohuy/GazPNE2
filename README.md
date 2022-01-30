@@ -40,9 +40,12 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 
 ```python
 from main import GazPNE2
-gazpne2=GazPNE2()
+gazpne2=GazPNE2() # it might take around 1 minute to load models
 tweets = ['Associates at the Kuykendahl Rd & Louetta Rd . store in Spring , TX gave our customers a reason to smile (: tayytink )','Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area ? Harve ']
 locations = gazpne2.extract_location(tweets)
+print(locations)
+'''This will output:
+{0: [{'LOC': 'Kuykendahl Rd', 'offset': (18, 30)}, {'LOC': 'Louetta Rd', 'offset': (34, 43)}, {'LOC': 'Spring', 'offset': (56, 61)}, {'LOC': 'TX', 'offset': (65, 66)}], 1: [{'LOC': 'Corpus Christi Street', 'offset': (38, 58)}, {'LOC': 'Hwy 35', 'offset': (64, 69)}, {'LOC': 'Rockport', 'offset': (0, 7)}, {'LOC': 'TX', 'offset': (9, 10)}]}'''
 ```
 
 Note that it might take around 1 minute to load required models and data. 
