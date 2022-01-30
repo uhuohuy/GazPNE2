@@ -41,19 +41,16 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 ```python
 from main import GazPNE2
 gazpne2=GazPNE2() # it might take around 1 minute to load models
-tweets = ['Associates at the Kuykendahl Rd & Louetta Rd . store in Spring , TX gave our customers a reason to smile (: tayytink )',\
-'Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area ? Harve ']
+tweets = ["Associates at the Kuykendahl Rd & Louetta Rd. store in Spring, TX gave our customers a reason to smile",\
+"Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area? Harve"]
 locations = gazpne2.extract_location(tweets)
 print(locations)
 '''This will output:
 {0: [{'LOC': 'Kuykendahl Rd', 'offset': (18, 30)}, {'LOC': 'Louetta Rd', 'offset': (34, 43)}, 
-{'LOC': 'Spring', 'offset': (56, 61)}, {'LOC': 'TX', 'offset': (65, 66)}], 
+{'LOC': 'Spring', 'offset': (55, 60)}, {'LOC': 'TX', 'offset': (63, 64)}], 
 1: [{'LOC': 'Corpus Christi Street', 'offset': (38, 58)}, {'LOC': 'Hwy 35', 'offset': (64, 69)}, 
-{'LOC': 'Rockport', 'offset': (0, 7)}, {'LOC': 'TX', 'offset': (9, 10)}]}
+{'LOC': 'Rockport', 'offset': (0, 7)}, {'LOC': 'TX', 'offset': (9, 10)}]}'''
 ```
-
-Note that it might take around 1 minute to load required models and data. 
-
 Test your own data: Set <*input*> to 0 and set <*input_file*> to the path of your data. It is a .txt file with each line corresponding to a tweet message.
 
 > python -u main.py --input=0 --input_file=data/test.txt
