@@ -37,6 +37,7 @@ In the first run, the pretrained BERT models will be automaticlly downloaded and
 
 
 ### Use the code
+#### A snippet of example code is below:
 
 ```python
 from main import GazPNE2
