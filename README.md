@@ -36,7 +36,7 @@ Python 3.7 is required
 In the first run, the pretrained BERT models will be automaticlly downloaded and cached on the local drive.
 
 
-### Use the code
+### Test the code
 A snippet of example code is as below. It is faster to input multiple tweets at once than one single tweet. 
 
 ```python
