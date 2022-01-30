@@ -71,9 +71,5 @@ datasets [a,b,c]  can be obtained from https://rebrand.ly/LocationsDataset.
 datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-open-dataset/.
 datasets [g,h] can be obtained by contacting the [author](https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
 
-To execute below command in case of a jave error.  
-
-> spack load openjdk
 ## Contact
 If you have any questions, feel free to contact Xuke Hu via xuke.hu@dlr.de
-
