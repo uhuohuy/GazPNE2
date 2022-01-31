@@ -1562,6 +1562,7 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                 detection_dict['LOC'] = place_str
                 detection_dict['offset'] = detected_offsets[i]
                 detection_dicts.append(detection_dict)
+            detection_dicts = sorted(detection_dicts, key = lambda i: i['offset'][0])
             total_return_results[key]=detection_dicts
                 
                 # save_file.write('tp:'+str(c_tp)+' c_fp:'+str(c_fp)+' c_fn:'+str(c_fn))
