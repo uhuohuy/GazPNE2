@@ -270,7 +270,7 @@ class GazPNE2:
                 
         return ent_prob, ent_prob_gen,descs
     
-    def location_extraction(self,strings,thres1=0.7,region=-2,\
+    def extract_location(self,strings,thres1=0.7,region=-2,\
            special_con_t=0.35, abb_ent_thres=0.3, context_thres=0.3, \
             weight=1,bool_fast=1, special_ent_t=0.5, \
              merge_thres=0.5,\
