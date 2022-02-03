@@ -69,7 +69,9 @@ To test public datasets (19), execute the following command. You will get the re
 > python -u main.py --input=4
 > 
 datasets [a,b,c]  can be obtained from https://rebrand.ly/LocationsDataset.
+
 datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-open-dataset/.
+
 datasets [g,h] can be obtained by contacting the [author](https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
 
 ## Contact
