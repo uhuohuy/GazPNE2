@@ -38,7 +38,7 @@ A snippet of example code is as below.
 
 ```python
 from main import GazPNE2
-gazpne2=GazPNE2() # This will take around 1 minute to load models
+gazpne2=GazPNE2() # This will take around 30 seconds to load models
 tweets = ["Associates at the Kuykendahl Rd & Louetta Rd. store in Spring, TX gave our customers a reason to smile",\
 "Rockport TX any photos of damage down Corpus Christi Street and Hwy 35 area? #houstonflood"]
 # It is faster to input multiple tweets at once than one single tweet mutiple times. 
