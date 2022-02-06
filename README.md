@@ -18,7 +18,7 @@ The data we used to evaluate our approach is as follows:
 
 ## Use the code
 ### Prepare model data
-Download the trained [model](https://drive.google.com/file/d/1vN0dGBS2JvyKjaZ6eb-u_o6Veq5p9uFv/view?usp=sharin) and unzip the files into the _model_ folder.
+Download the trained [model](https://drive.google.com/file/d/1j4CSF13Uoajcfh1h-yBuvVXo_-rub05o/view?usp=sharing) and unzip the files into the _model_ folder.
 
 ### Install python dependencies
 Python 3.7 is required
