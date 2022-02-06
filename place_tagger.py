@@ -1192,7 +1192,7 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                     postives = []
                     general_place_indexs = []
                     for i, p in enumerate(preds):
-                         if pos_prob[i] >= postive_pro_t and len(all_sub_lists[i]) >1:
+                         if pos_prob[i] >= postive_pro_t: # and len(all_sub_lists[i]) >1
                              postives.append(i)
                          else: # some candidates are also checked as long as their pos tag is pronoun
                              # all_pron = True
