@@ -244,34 +244,97 @@ def gen_sentence_raw(terms_arr,index):
 
 '''load the bigram model from file'''
 
+# ''' get the embedding of a sentence  '''
+# def sentence_embeding(sentence, trained_emb, word_idx,glove_emb,osm_emb,\
+#                       max_len,emb_dim,gaz_emb_dim,\
+#                       max_char_len,bool_mb_gaze,\
+#                       PAD_idx,START_WORD,listOfProb, char_hc_emb,flex_feat_len):
+#     matrix_len = len(sentence)
+#     weights_matrix = np.zeros((max_len, emb_dim+gaz_emb_dim+6+flex_feat_len)); 
+
+#     for i in range(0,max_len-matrix_len):
+#         char_loc_feat = []
+#         if flex_feat_len - 3 > 0:
+#             char_loc_feat = [0]*(flex_feat_len - 3)
+#         weights_matrix[i] = np.concatenate((trained_emb[PAD_idx],[0,0,0],char_loc_feat),axis=None)
+#     for i, word in enumerate(sentence):
+#         temp_hc = []
+#         temp_hc.append(len(sentence))
+#         temp_hc.append(i+1)
+#         if i==0:
+#             pre_word = START_WORD
+#         else:
+#             pre_word = sentence[i-1]
+#         try:
+#             temp_hc.append(listOfProb[(word, pre_word)])
+#         except KeyError:
+#             temp_hc.append(0)
+#         if flex_feat_len - 3 > 0:
+#             char_loc_feat = feat_char_loc(word, max_char_len)
+#             temp_hc.extend(char_loc_feat)
+#         if word not in word_idx.keys():
+#             try: 
+#                 temp_glove = glove_emb[word]
+#             except KeyError:
+#                 temp_glove = np.random.normal(scale=0.1, size=(emb_dim,))
+#             if bool_mb_gaze:
+#                 try: 
+#                     temp_gaz = osm_emb[word]
+#                 except KeyError:
+#                     temp_gaz = np.random.normal(scale=0.1, size=(gaz_emb_dim,))
+#             else:
+#                 temp_gaz = []
+#             try:
+#                 temp_hc6 = char_hc_emb[word]
+#             except KeyError:
+#                 temp_hc6 = np.random.normal(scale=2, size=6)
+#             weights_matrix[i+max_len-matrix_len]=np.concatenate((temp_glove,temp_gaz,temp_hc6,np.asarray(temp_hc)
+# ), axis=None)
+#         else:
+#             w_idx = word_idx[word]
+#             weights_matrix[i+max_len-matrix_len]=np.concatenate((trained_emb[w_idx],np.asarray(temp_hc)),axis=None)
+
+#     return weights_matrix
+
+
+
+
 ''' get the embedding of a sentence  '''
 def sentence_embeding(sentence, trained_emb, word_idx,glove_emb,osm_emb,\
                       max_len,emb_dim,gaz_emb_dim,\
                       max_char_len,bool_mb_gaze,\
-                      PAD_idx,START_WORD,listOfProb, char_hc_emb,flex_feat_len):
+                      PAD_idx,START_WORD,listOfProb, char_hc_emb,flex_feat_len,bool_hc=1,bool_fix_hc=1):
     matrix_len = len(sentence)
-    weights_matrix = np.zeros((max_len, emb_dim+gaz_emb_dim+6+flex_feat_len)); 
+    weights_matrix = np.zeros((max_len, emb_dim+gaz_emb_dim+6*bool_hc+flex_feat_len)); 
 
     for i in range(0,max_len-matrix_len):
         char_loc_feat = []
         if flex_feat_len - 3 > 0:
             char_loc_feat = [0]*(flex_feat_len - 3)
-        weights_matrix[i] = np.concatenate((trained_emb[PAD_idx],[0,0,0],char_loc_feat),axis=None)
+        if bool_hc:
+            default_hc = [0,0,0]
+        else:
+            default_hc = []
+            
+        weights_matrix[i] = np.concatenate((trained_emb[PAD_idx],default_hc,char_loc_feat),axis=None)
     for i, word in enumerate(sentence):
         temp_hc = []
-        temp_hc.append(len(sentence))
-        temp_hc.append(i+1)
+        if bool_hc:
+            temp_hc.append(len(sentence))
+            temp_hc.append(i+1)
         if i==0:
             pre_word = START_WORD
         else:
             pre_word = sentence[i-1]
-        try:
-            temp_hc.append(listOfProb[(word, pre_word)])
-        except KeyError:
-            temp_hc.append(0)
-        if flex_feat_len - 3 > 0:
-            char_loc_feat = feat_char_loc(word, max_char_len)
-            temp_hc.extend(char_loc_feat)
+        if bool_hc:
+            try:
+                temp_hc.append(0)
+                #temp_hc.append(listOfProb[(word, pre_word)])
+            except KeyError:
+                temp_hc.append(0)
+            if flex_feat_len - 3 > 0:
+                char_loc_feat = feat_char_loc(word, max_char_len)
+                temp_hc.extend(char_loc_feat)
         if word not in word_idx.keys():
             try: 
                 temp_glove = glove_emb[word]
@@ -284,10 +347,12 @@ def sentence_embeding(sentence, trained_emb, word_idx,glove_emb,osm_emb,\
                     temp_gaz = np.random.normal(scale=0.1, size=(gaz_emb_dim,))
             else:
                 temp_gaz = []
-            try:
-                temp_hc6 = char_hc_emb[word]
-            except KeyError:
-                temp_hc6 = np.random.normal(scale=2, size=6)
+            temp_hc6 = []
+            if bool_hc and bool_fix_hc:
+                try:
+                    temp_hc6 = char_hc_emb[word]
+                except KeyError:
+                    temp_hc6 = np.random.normal(scale=2, size=6)
             weights_matrix[i+max_len-matrix_len]=np.concatenate((temp_glove,temp_gaz,temp_hc6,np.asarray(temp_hc)
 ), axis=None)
         else:
@@ -296,7 +361,7 @@ def sentence_embeding(sentence, trained_emb, word_idx,glove_emb,osm_emb,\
 
     return weights_matrix
 
-    
+ 
 
 def extract_subtaglist(tag_list, full_offset, sub_offset):
     return_list = []
@@ -401,6 +466,9 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file,strings=[]):
 #                        if os.path.isdir(os.path.join(raw_data_dir,o))]
     elif region== 5:
          dir_list = ['data']
+    elif region ==-10:
+        raw_data_dir = 'data/D4h_data'
+        target_dir = [raw_data_dir]
     elif region == 50:
         raw_data_dir = 'data/events_set'
     elif region == 51:
@@ -430,16 +498,27 @@ def load_cache_from_file(region,word2idx,abv_punk,input_file,strings=[]):
     org_ignore_list = [18,19,20,21]
     total_tweet_count = 0
     '''preload data to cache'''
-    if region == 4 or region == 5:
-        for sub_dir in dir_list:
-            if region == 4:
-                new_file_name = sub_dir+'/tweets.jsonl'
-            else:
-                new_file_name = sub_dir+'/matti_tweets.ndjson'
+    if region in [4,5,-10]:
+        file_names = []
+        if region==-10:
+            for sub_dir in target_dir:
+                temp_file_names = [f for f in os.listdir(sub_dir) if f.endswith('.ndjson')]
+                file_names.extend(temp_file_names)
+        else:
+            for sub_dir in dir_list:
+                if region == 4:
+                    new_file_name = sub_dir+'/tweets.jsonl'
+                else:
+                    new_file_name = sub_dir+'/matti_tweets.ndjson'
+                file_names.append(new_file_name)
+        for new_file_name in file_names:
             if os.path.isfile(new_file_name):
                 jsonObj = pd.read_json(path_or_buf=new_file_name, lines=True)
                 for i in range(len(jsonObj)):
-                    tweet = jsonObj['text'][i].encode("ascii", "ignore").decode("utf-8")
+                    if region == -10:
+                        tweet = jsonObj['translation'][i].encode("ascii", "ignore").decode("utf-8")
+                    else:
+                        tweet = jsonObj['text'][i].encode("ascii", "ignore").decode("utf-8")
                     key = jsonObj['id'][i]
                     place_names = []
                     place_offset = []
@@ -1020,7 +1099,8 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                 print(tweet)
                 #print('ground truth', place_names)
                 #print('ground truth', place_offset)
-            # print(tag_lists)
+            if bool_debug:
+                print(tag_lists)
             new_full_offset = lowerize(offsets, full_offset, tag_lists)
             save_file.write('#'*50)
             save_file.write('\n')
@@ -1085,14 +1165,14 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                     index_t += 1
     #                    all_sub_lists, sub_index = sub_lists(sentence, s_max_len)
                     osm_probs = [0.1]*len(all_sub_lists)
-                    input_emb = np.zeros((len(all_sub_lists),gazpne2.s_max_len,gazpne2.emb_dim+gazpne2.gaz_emb_dim+6+gazpne2.flex_feat_len))
+                    input_emb = np.zeros((len(all_sub_lists),gazpne2.s_max_len,gazpne2.emb_dim+gazpne2.gaz_emb_dim+6*(gazpne2.hc and gazpne2.bool_fix_hc)+gazpne2.flex_feat_len))
                     for i, sub_sen in enumerate(all_sub_lists):
                         sub_sen = [replace_digs(word) for word in sub_sen]
                         sub_sen = [word.lower() for word in sub_sen]
                         input_emb[i] = sentence_embeding(sub_sen, gazpne2.np_word_embeds,gazpne2.word2idx,gazpne2.glove_emb,\
                                                   gazpne2.gazetteer_emb,gazpne2.s_max_len,gazpne2.emb_dim,\
                                                   gazpne2.gaz_emb_dim,gazpne2.max_char_len,gazpne2.bool_mb_gaze,\
-                                                 gazpne2.PAD_idx,gazpne2.START_WORD,gazpne2.bigram_model,gazpne2.char_hc_emb,gazpne2.flex_feat_len)
+                                                 gazpne2.PAD_idx,gazpne2.START_WORD,gazpne2.bigram_model,gazpne2.char_hc_emb,gazpne2.flex_feat_len,gazpne2.hc,gazpne2.bool_fix_hc)
                         if tuple(sub_sen) in gazpne2.osm_names:
                             osm_probs[i] = OSM_CONF
     
@@ -1466,7 +1546,8 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                         if not bool_sub:
                             detected_place_names.append(tuple(all_sub_lists[i]))
                             detected_offsets.append(tuple([cur_off[sub_index[i][0]][0],cur_off[sub_index[i][-1]][1]]))
-                            save_file.write(str(all_sub_lists[i])+'\n')
+                            # save_file.write(str(all_sub_lists[i])+'\n')
+                            # save_file.write(str(all_sub_lists[i])+'\n')
                             # save_file.write(str(round(origin_pos_prob[i],3))+':'+str(all_sub_lists[i])+'\n')
                      
                     #invalids.extend(include_valid_places(real_detected_index, sub_index, cur_off, stanza_ents))
@@ -1547,7 +1628,7 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                         print('stanza_full',place)
                     detected_place_names.append(tuple(place))
                     detected_offsets.append(off)
-                    save_file.write('stanford/stanza:'+str(place)+'\n')
+                    # save_file.write('stanford/stanza:'+str(place)+'\n')
 
             c_tp, c_fp, c_fn, place_detect_score = interset_num(detected_offsets,place_offset,detected_place_names,\
                                                                place_names,ignored_places, amb_place_offset, amb_place_names, cur_hash)

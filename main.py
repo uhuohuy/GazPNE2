@@ -13,7 +13,7 @@ from utility import *
 import argparse
 import torch
 from Model import C_LSTM
-
+# import memory_profiler
 #sys.path.append(os.path.abspath('unsupervised_NER'))
 import time
 # from main_NER import UnsupNER
@@ -21,8 +21,6 @@ import SentWrapper
 MASK_TAG = "entity"
 DISPATCH_MASK_TAG = "entity"
 MODEL_PATH ='bert-large-cased'
-
-
 
 def read_ent_file(ent_file):
     file1 = open(ent_file, 'r')
@@ -44,17 +42,12 @@ def read_ent_file(ent_file):
             ent_dict_adv[key.lower()] = word_ent_dict[key]
     return ent_dict_adv
 
-
 class GazPNE2:
-    def __init__(self,model_ID='0622143005',epoch=4, hidden=150, filter_l=1, osm = 1, osmembed=2, bool_general_check=1,general_words_num=26000, emb=1, bool_mb_gaze=0, neigh=301, context_neigh=301, weight=4, context_model=0, intrinsci_model=0):
-        self.desc_singleton = SentWrapper.SentWrapper(context_model)
-#        self.desc_singleton.descs = SentWrapper.read_descs(DESC_FILE_ADV)
-#        self.cluster_singleton = dist_v2.BertEmbeds('cache/',0,'data/vocab.txt','data/bert_vectors.txt',True,True,'data/labels.txt','data/stats_dict.txt','data/preserve_1_2_grams.txt','data/glue_words.txt')
-#        self.common_descs = read_common_descs(cf.read_config()["COMMON_DESCS_FILE"])
-        self.Word_Entities = read_ent_file('data/word_ent'+str(neigh)+'w'+str(weight)+'.txt')   # word_ent100_pure.txt
-        self.Word_Entities_C = self.Word_Entities #dist_v2.read_ent_file('data/word_ent'+str(context_neigh)+'w'+str(weight)+'.txt')   # word_ent100_pure.txt
-        
+    # @profile
+    def __init__(self,model_ID='0205004732',epoch=0, hidden=150, filter_l=1, osm = 1, osmembed=2, bool_general_check=1,general_words_num=26000, emb=1, bool_mb_gaze=0, neigh=301, context_neigh=301, weight=4, context_model=0, intrinsci_model=0, bool_hc=1,bool_fix_hc=1):
+        self.hc = bool_hc
         self.model_ID = model_ID
+        self.bool_fix_hc = bool_fix_hc
         fc_file='data/fc.txt'
         self.fc_tokens = extract_tokens(fc_file)
         file_name = 'data/osm_abbreviations_globe.csv'
@@ -66,14 +59,15 @@ class GazPNE2:
                     new_abv += char + '.'
             self.abv_punk[new_abv]=key
         #load the osm place names
-        
+        del sim_abv
         start_time = time.time()
     
         if osm:
     #        if args.F1 == 4:
-            osm_names = load_osm_names_fre1('data/'+str(model_ID)+str(epoch)+'.txt', [], aug_count = 1)
-            osm_names = [item for item in osm_names if len(item) > 1]
-            self.osm_names = set(osm_names)
+            self.osm_names = load_osm_names_fre1('model/'+str(model_ID)+str(epoch)+'.txt', [], aug_count = 1)
+            self.osm_names = [item for item in self.osm_names if len(item) > 1]
+            self.osm_names = set(self.osm_names)
+            # del osm_names
     #        else:
     #            osm_names = load_osm_names_fre('data/country.txt', [], aug_count = 1)
     #            osm_names = set(osm_names)
@@ -98,9 +92,12 @@ class GazPNE2:
         self.PAD_idx = 0
         self.s_max_len = 10
         bigram_file = 'model/'+model_ID+'-bigram.txt'
-        # hcfeat_file = 'model/'+model_ID+'-hcfeat.txt'
-        self.START_WORD = 'hhh' #'start_string_taghu' # 'hhh'
-        self.bigram_model = load_bigram_model(bigram_file)
+        hcfeat_file = 'model/'+model_ID+'-hcfeat.txt'
+        self.START_WORD = 'start_string_taghu'#'hhh' #'start_string_taghu' # 'hhh'
+        if self.hc:
+            self.bigram_model = {} #load_bigram_model(bigram_file) #{};
+        else:
+            self.bigram_model = {}
         # bigram_model = {}
         self.bool_mb_gaze = bool_mb_gaze
         if bool_mb_gaze:
@@ -118,7 +115,7 @@ class GazPNE2:
         self.abbr_dict = abbrevison1(file_name)
         start_time = time.time()
     
-        # char_hc_emb,_ = load_embeding(hcfeat_file)
+        # self.char_hc_emb,_ = load_embeding(hcfeat_file)
         self.char_hc_emb = {}
         # if bool_debug:
         #     print('hcfeat_file', time.time()-start_time)
@@ -138,7 +135,7 @@ class GazPNE2:
             self.glove_emb = {}    
             self.emb_dim = 50
     
-        self.weight_l = self.emb_dim+self.gaz_emb_dim+6
+        self.weight_l = self.emb_dim+self.gaz_emb_dim+6*(self.hc and self.bool_fix_hc)
         weights_matrix = np.zeros((len(self.word2idx.keys()), self.weight_l))
         self.weights_matrix= torch.from_numpy(weights_matrix)
         tag_to_ix = {"p": 0, "n": 1}
@@ -146,7 +143,11 @@ class GazPNE2:
         self.lstm_dim = hidden
         model_path = 'model/'+model_ID+'epoch'+str(epoch)+'.pkl'
         self.DROPOUT = 0.5
-        self.flex_feat_len = 3
+        if self.hc:
+            self.flex_feat_len = 3
+        else:
+            self.flex_feat_len = 0
+            
         self.fileter_l = filter_l
         start_time = time.time()
     
@@ -155,7 +156,16 @@ class GazPNE2:
         self.model.eval()
         # if bool_debug:
         #     print('load_state_dict', time.time()-start_time)
-        self.np_word_embeds = self.model.embedding.weight.detach().numpy() 
+        self.np_word_embeds = self.model.embedding.weight.detach().numpy()
+        
+        
+        self.desc_singleton = SentWrapper.SentWrapper(context_model)
+#        self.desc_singleton.descs = SentWrapper.read_descs(DESC_FILE_ADV)
+#        self.cluster_singleton = dist_v2.BertEmbeds('cache/',0,'data/vocab.txt','data/bert_vectors.txt',True,True,'data/labels.txt','data/stats_dict.txt','data/preserve_1_2_grams.txt','data/glue_words.txt')
+#        self.common_descs = read_common_descs(cf.read_config()["COMMON_DESCS_FILE"])
+        self.Word_Entities = read_ent_file('model/word_ent'+str(neigh)+'w'+str(weight)+'.txt')   # word_ent100_pure.txt
+        self.Word_Entities_C = self.Word_Entities #dist_v2.read_ent_file('data/word_ent'+str(context_neigh)+'w'+str(weight)+'.txt')   # word_ent100_pure.txt
+
 
     def context_cue_new(self, masked_sent, bool_tweet_bert=0, ent=[],  ori_masked_sen = '', bool_debug=0, bool_formal=0):
         ent_prob = {}
@@ -270,7 +280,7 @@ class GazPNE2:
                 
         return ent_prob, ent_prob_gen,descs
     
-    def extract_location(self,strings,thres1=0.7,region=-2,\
+    def extract_location(self,strings,thres1=0.8,region=-2,\
            special_con_t=0.35, abb_ent_thres=0.3, context_thres=0.3, \
             weight=1,bool_fast=1, special_ent_t=0.5, \
              merge_thres=0.5,\
@@ -291,18 +301,19 @@ class GazPNE2:
         
 def main():
     parser = argparse.ArgumentParser(description='manual to this script')
-    parser.add_argument('--id', type=str, default='0622143005')
+    parser.add_argument('--id', type=str, default='0205004732')#'0622143005'
     parser.add_argument('--osmembed', type=int, default= 7)
-    parser.add_argument('--thres1', type=float, default= 0.7)
+    parser.add_argument('--thres1', type=float, default= 0.8) #0.7
     parser.add_argument('--filter_l', type=int, default= 1)
     parser.add_argument('--bool_osm', type=int, default= 0)
+    parser.add_argument('--hc', type=int, default= 1)
     parser.add_argument('--emb', type=int, default= 1)
     parser.add_argument('--cnn', type=int, default= 150)
     parser.add_argument('--lstm', type=int, default= 150)
     parser.add_argument('--special_con_t', type=float, default= 0.35)
     parser.add_argument('--input', type=int, default= 4)
     parser.add_argument('--input_file', type=str, default= 'test.txt')
-    parser.add_argument('--epoch', type=int, default= 4)
+    parser.add_argument('--epoch', type=int, default= 0)  #4
     parser.add_argument('--abb_ent_thres', type=float, default= 0.3)
     parser.add_argument('--context_thres', type=float, default= 0.3)
     parser.add_argument('--abb_context_thres', type=float, default= 0.2)
@@ -357,14 +368,16 @@ def main():
         print ('bool_formal: '+str(args.bool_formal))
         print ('c_model: '+str(args.c_model))
         print ('i_model: '+str(args.i_model))
-    
+        print ('hc: '+str(args.hc))
+
     start_time = time.time()
     gazpne2 = GazPNE2(args.id,args.epoch, args.lstm, args.filter_l, args.osm, args.osmembed, args.bool_general_check, \
                       args.general_words, args.emb, args.bool_osm, args.dic_neig, args.con_neig, \
-                          args.emw, args.c_model, args.i_model)
+                          args.emw, args.c_model, args.i_model, args.hc)
     # obj = UnsupNER(args.dic_neig,args.con_neig,args.emw,args.c_model,args.i_model)
     # if args.bool_debug:
     #     print('UnsupNER', time.time()-start_time)
+    # return
     print('model is loading...')
     time_str = datetime.now().strftime('%m%d%H%M%S')
     # print('time_str',time_str)
@@ -373,7 +386,8 @@ def main():
         regions=[32,31,30]
     elif args.input == 3:
         regions=[-2,-3,-4,-5]
-
+    elif args.input == -1:
+        regions=[-10]
     elif args.input == 0:
         regions=[49]
     elif args.input == -10:
