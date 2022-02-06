@@ -13,7 +13,7 @@ The data we used to evaluate our approach is as follows:
 ## Result
 <p align="center">
 <a href="url">
- <img src="figure/result.png" ></a>
+ <img src="figure/result1.png" ></a>
 </p>
 
 ## Use the code
