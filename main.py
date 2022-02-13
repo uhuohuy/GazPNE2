@@ -44,7 +44,9 @@ def read_ent_file(ent_file):
 
 class GazPNE2:
     # @profile
-    def __init__(self,model_ID='0205004732',epoch=0, hidden=150, filter_l=1, osm = 1, osmembed=2, bool_general_check=1,general_words_num=26000, emb=1, bool_mb_gaze=0, neigh=301, context_neigh=301, weight=4, context_model=0, intrinsci_model=0, bool_hc=1,bool_fix_hc=1):
+    def __init__(self,model_ID='0212095453',epoch=0, hidden=150, filter_l=1, osm = 1, osmembed=2, bool_general_check=1, \
+                 general_words_num=26000, emb=1, bool_mb_gaze=0, neigh=301, context_neigh=301, weight=4, context_model=0, \
+                     intrinsci_model=0, bool_hc=1, bool_fix_hc=1):
         self.hc = bool_hc
         self.model_ID = model_ID
         self.bool_fix_hc = bool_fix_hc
@@ -65,7 +67,7 @@ class GazPNE2:
         if osm:
     #        if args.F1 == 4:
             self.osm_names = load_osm_names_fre1('model/'+str(model_ID)+str(epoch)+'.txt', [], aug_count = 1)
-            self.osm_names = [item for item in self.osm_names if len(item) > 1]
+            self.osm_names = [item for item in self.osm_names]
             self.osm_names = set(self.osm_names)
             # del osm_names
     #        else:
@@ -82,6 +84,11 @@ class GazPNE2:
                 general_place_list = load_osm_names_fre(general_file, [], aug_count = 1)
             else:
                 general_place_list = []
+            for word in prefix_places_words:
+                general_place_list.append(tuple([word.lower()]))
+            # for word in category_words:
+            #     general_place_list.append(tuple([word.lower()]))
+            general_place_list = list(set(general_place_list))
             # candidate_file = 'data/candidates'+str(args.general_words)+'.txt'
             # if os.path.isfile(candidate_file):
             #     candidate_words = load_osm_names_fre(candidate_file, [], aug_count = 1)
@@ -280,8 +287,8 @@ class GazPNE2:
                 
         return ent_prob, ent_prob_gen,descs
     
-    def extract_location(self,strings,thres1=0.8,region=-2,\
-           special_con_t=0.35, abb_ent_thres=0.3, context_thres=0.3, \
+    def extract_location(self,strings,thres=0.75,region=-2,\
+           special_con_t=0.2, abb_ent_thres=0.3, context_thres=0.3, \
             weight=1,bool_fast=1, special_ent_t=0.5, \
              merge_thres=0.5,\
             fc_ratio=0.25,input_file='test.txt',\
@@ -289,7 +296,7 @@ class GazPNE2:
             single_person_c_t=0.23,bool_debug=0,bool_formal=0):
         time_str = datetime.now().strftime('%m%d%H%M%S')
         
-        F1, P,R, detection_results = place_tagging(0, time_str,self,thres1,100,\
+        F1, P,R, detection_results = place_tagging(0, time_str,self,thres,100,\
            special_con_t, abb_ent_thres, context_thres, \
             weight,bool_fast, special_ent_t, \
              merge_thres,\
@@ -301,7 +308,7 @@ class GazPNE2:
         
 def main():
     parser = argparse.ArgumentParser(description='manual to this script')
-    parser.add_argument('--id', type=str, default='0205004732')#'0622143005'
+    parser.add_argument('--id', type=str, default='0212095453')#'0205004732' '0622143005'
     parser.add_argument('--osmembed', type=int, default= 7)
     parser.add_argument('--thres1', type=float, default= 0.8) #0.7
     parser.add_argument('--filter_l', type=int, default= 1)
@@ -310,7 +317,7 @@ def main():
     parser.add_argument('--emb', type=int, default= 1)
     parser.add_argument('--cnn', type=int, default= 150)
     parser.add_argument('--lstm', type=int, default= 150)
-    parser.add_argument('--special_con_t', type=float, default= 0.35)
+    parser.add_argument('--special_con_t', type=float, default= 0.2)
     parser.add_argument('--input', type=int, default= 4)
     parser.add_argument('--input_file', type=str, default= 'test.txt')
     parser.add_argument('--epoch', type=int, default= 0)  #4
@@ -334,6 +341,8 @@ def main():
     parser.add_argument('--bool_formal', type=int, default= 0)
     parser.add_argument('--c_model', type=int, default= 0)
     parser.add_argument('--i_model', type=int, default= 0)
+    parser.add_argument('--bool_fix_hc', type=int, default= 1)
+
 
     args = parser.parse_args()
     if args.bool_debug:
@@ -369,16 +378,17 @@ def main():
         print ('c_model: '+str(args.c_model))
         print ('i_model: '+str(args.i_model))
         print ('hc: '+str(args.hc))
+        print ('bool_fix_hc: '+str(args.bool_fix_hc))
 
     start_time = time.time()
+    print('model is loading...')
     gazpne2 = GazPNE2(args.id,args.epoch, args.lstm, args.filter_l, args.osm, args.osmembed, args.bool_general_check, \
                       args.general_words, args.emb, args.bool_osm, args.dic_neig, args.con_neig, \
-                          args.emw, args.c_model, args.i_model, args.hc)
+                          args.emw, args.c_model, args.i_model, args.hc, args.bool_fix_hc)
     # obj = UnsupNER(args.dic_neig,args.con_neig,args.emw,args.c_model,args.i_model)
     # if args.bool_debug:
     #     print('UnsupNER', time.time()-start_time)
     # return
-    print('model is loading...')
     time_str = datetime.now().strftime('%m%d%H%M%S')
     # print('time_str',time_str)
         

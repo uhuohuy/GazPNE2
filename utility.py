@@ -471,6 +471,35 @@ def load_osm_names_fre(pos_f, fre_words, aug_count = 1, return_gen = 0):
     else:
         return pos_training_data
 
+def load_osm_names_fre_set(pos_f, fre_words, aug_count = 1, return_gen = 0):
+    pos_training_data = set()
+    general_places = set()
+    with codecs.open(pos_f, 'r',encoding='utf-8') as file:
+        for line in file:
+            line = unicodedata.normalize('NFKD', line).encode('ascii','ignore').decode("utf-8") 
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            row_nobrackets = re.sub("[\(\[].:;*?[\)\]]", "", line)         
+            corpus = [word.lower() for word in re.split("[. #,&\"\',’]",row_nobrackets)]
+            corpus = [word  for word in corpus if word]
+            corpus = [replace_digs(word) for word in corpus]
+            final_result = []
+            for token in corpus:
+                groups = re.split('(\d+)',token)
+                groups = [g for g in groups if g]
+                final_result.extend(groups)
+            if not(len(final_result) == 1 and final_result[0] in fre_words):
+                for k in range(aug_count):
+                    pos_training_data.add(tuple(final_result))
+            else:
+                if return_gen:
+                    general_places.add(tuple(final_result))
+    if return_gen:
+        return pos_training_data, general_places
+    else:
+        return pos_training_data
+
 '''load place names from a file'''    
 def load_osm_names_fre1(pos_f, fre_words, aug_count = 1, return_gen = 0):
     pos_training_data = []

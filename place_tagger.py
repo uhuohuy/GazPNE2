@@ -28,7 +28,7 @@ stanza_nlp = stanza.Pipeline(lang='en', processors='tokenize,ner')
 
 WORD_POS = 0
 TAG_POS = 1
-noun_tags_tweet = ['N','$','^','A', 'O','G'] #'P',
+noun_tags_tweet = ['N','$','R','^','A', 'O','G'] #'P',
 nan_single = ['A', 'O']
 pla_ctx_tags = ['N','$','^','A','G','P','&',',']
 not_start = ['P']
@@ -39,6 +39,7 @@ PERSON_POS = ['^','$']
 NUMBER_POS = ['$']
 IGNORE = [] #'#','NEWLINE'
 CAP = ['N','^','G']
+CAP1 = ['^']
 LOW = ['V']
 spatial_indicators = ['in','near','at','on','to','beyond','over','off','under','behind','from']
 exp_pos_list = ['^','$']
@@ -58,22 +59,22 @@ def lowerize(offsets, full_offset, tag_lists):
     new_off = []
     for s in full_offset:
         bool_lower = 0
+        cur_tag = 'G'
         for i, suboff in enumerate(offsets):
             for j, subsuboff in enumerate(suboff):
                 if s[1] >= subsuboff[0] and s[1] <= subsuboff[1] and \
                    s[2] >= subsuboff[0] and s[2] <= subsuboff[1]:
                        if tag_lists[i][j][1] in LOW:
                            bool_lower = 1
+                       cur_tag = tag_lists[i][j][1]
                        break
             if bool_lower:
                 break
         if bool_lower:
-            new_off.append(tuple([s[0].lower(), s[1], s[2]])) #.capitalize()
+            new_off.append(tuple([s[0].lower(), s[1], s[2],cur_tag])) #.capitalize()
         else:
-            new_off.append(tuple([s[0], s[1], s[2]]))
+            new_off.append(tuple([s[0], s[1], s[2],cur_tag]))
     return new_off
-
-
                  
 def extract_nouns_tweet(terms_arr,max_len, dis_split,cur_off, bool_keep_con = 0):
     new_arr = []
@@ -305,7 +306,7 @@ def sentence_embeding(sentence, trained_emb, word_idx,glove_emb,osm_emb,\
                       max_char_len,bool_mb_gaze,\
                       PAD_idx,START_WORD,listOfProb, char_hc_emb,flex_feat_len,bool_hc=1,bool_fix_hc=1):
     matrix_len = len(sentence)
-    weights_matrix = np.zeros((max_len, emb_dim+gaz_emb_dim+6*bool_hc+flex_feat_len)); 
+    weights_matrix = np.zeros((max_len, emb_dim+gaz_emb_dim+6*bool_hc*bool_fix_hc+flex_feat_len)); 
 
     for i in range(0,max_len-matrix_len):
         char_loc_feat = []
@@ -748,7 +749,9 @@ def filter_invalid_candidates(sub_index, all_sub_lists, pos_lists,cur_off, stanz
     pos_lists = [pos_lists[i] for i in range(len(pos_lists)) if i not in invalids]
     return sub_index, all_sub_lists,pos_lists
 
-
+# def split_stanza_ents(stanza_ents):
+#     for ent in stanza_ents:
+        
 def filter_invalid_candidates_adv(sub_index, all_sub_lists, pos_lists,cur_off, stanza_ents):
     invalids = []
     for i, index in enumerate(sub_index):
@@ -943,7 +946,22 @@ def general_check(bert_cache,obj,cur_off_pla,special_ent_t,\
         else:
             return 0, bert_cache        
 
-
+def captalize_tweet(full_offset, tweet):
+    new_tweet = tweet
+    for item in full_offset:
+        if item[3] in CAP1 and item[0].lower() == tweet[item[1]:item[2]+1].lower():
+            if item[1] == 0:
+                first_part = ''
+            else:
+                first_part = new_tweet[0:item[1]]
+            if item[2]+1 == len(tweet):
+                last_part = ''
+            else:
+                last_part = new_tweet[item[2]+1: ]
+            new_tweet = first_part + item[0].capitalize() + last_part
+    return new_tweet
+            
+            
 def place_tagging(no_bert, time_str,gazpne2, thres, region,\
               loc_thres=0.1,\
              ent_thres=0.3, context_thres=0.2,  weight=1, \
@@ -1075,7 +1093,8 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
             dis_split = tweet_cache[key][8]
             amb_place_names = tweet_cache[key][9]
             amb_place_offset = tweet_cache[key][10]
-    
+            tag_lists = temp_tags[key]
+
             if region in mulit_hashtag_ignore:
                 cur_hash = hashtag_offsets
             else:
@@ -1092,7 +1111,6 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                 truth.append(pla)
                 
             truth_all.append(truth)
-            tag_lists = temp_tags[key]
             if not no_bert and region != 100:
                 print('#'*50)
                 print(str(tweet_count)+'-th tweet' )
@@ -1102,6 +1120,7 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
             if bool_debug:
                 print(tag_lists)
             new_full_offset = lowerize(offsets, full_offset, tag_lists)
+            # print(new_full_offset)
             save_file.write('#'*50)
             save_file.write('\n')
             save_file.write(str(key)+': '+tweet+'\n')
@@ -1139,7 +1158,8 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
             stanford_result = []
 
             # print(tagged)
-
+            # cap_tweet = captalize_tweet(new_full_offset, tweet)
+            # print(cap_tweet)
             stanza_result = stanza_nlp(tweet)
             stanza_ents = stanza_result.entities
             if bool_debug:
@@ -1154,7 +1174,6 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                     
                     sub_index, all_sub_lists, pos_lists = extract_nouns_tweet(tag_lists[idx],gazpne2.s_max_len,dis_split, cur_off)
                     sub_index, all_sub_lists, pos_lists = filterArticles(sentence,sub_index, all_sub_lists, pos_lists)
-
                     # print(sub_index)
                     # print(all_sub_lists)
                     sub_index, all_sub_lists, pos_lists = filter_invalid_candidates_adv(sub_index, all_sub_lists, \
@@ -1192,7 +1211,10 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                     postives = []
                     general_place_indexs = []
                     for i, p in enumerate(preds):
-                         if pos_prob[i] >= postive_pro_t: # and len(all_sub_lists[i]) >1
+                         place = [p.lower() for p in all_sub_lists[i]]
+                         bool_general_place = bool(tuple(place) in general_words)
+                         # print(place,pos_prob[i], bool_general_place)
+                         if pos_prob[i] >= postive_pro_t and not bool_general_place:
                              postives.append(i)
                          else: # some candidates are also checked as long as their pos tag is pronoun
                              # all_pron = True
@@ -1201,7 +1223,7 @@ def place_tagging(no_bert, time_str,gazpne2, thres, region,\
                              #         all_pron = False
                              #         break
                              # if all_pron:
-                             if tuple([replace_digs(word).lower() for word in  all_sub_lists[i]]) in general_words and not no_bert:
+                             if bool_general_place and not no_bert:
                                  postives.append(i)
                                  general_place_indexs.append(i)
                     removed_positvie, valid_stanza_loc = sub_stanza(postives,stanza_ents,cur_off,sub_index,all_sub_lists)
