@@ -64,7 +64,7 @@ To test our manually annotated datasets (3000 tweets), execute the following com
 To test public datasets (19), execute the following command. You will get the result of partial datasets since some are not publicly available.
 
 > python -u main.py --input=4
-> 
+
 datasets [a,b,c]  can be obtained from https://rebrand.ly/LocationsDataset.
 
 datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-open-dataset/.
@@ -73,23 +73,7 @@ datasets [g,h] can be obtained by contacting the [author](https://www.researchga
 ## Citing
 If you do make use of GazPNE2 or any of its components please cite the following publication:
 
-> @ARTICLE{9711571,
-
-> author={Hu, Xuke and Zhou, Zhiyong and Sun, Yeran and Kersten, Jens and Klan, Friederike and Fan, Hongchao and Wiegmann, Matti},
-
-> journal={IEEE Internet of Things Journal}, 
-
-> title={GazPNE2: A general place name extractor for microblogs fusing gazetteers and pretrained transformer models}, 
-
-> year={2022},
-
->  volume={},
-
->  number={},
-
->  pages={1-1},
-
->  doi={10.1109/JIOT.2022.3150967}}
+> X. Hu et al., "GazPNE2: A general place name extractor for microblogs fusing gazetteers and pretrained transformer models," in IEEE Internet of Things Journal, doi: 10.1109/JIOT.2022.3150967.
 
 
 
