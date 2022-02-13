@@ -73,7 +73,16 @@ datasets [g,h] can be obtained by contacting the [author](https://www.researchga
 ## Citing
 If you do make use of GazPNE2 or any of its components please cite the following publication:
 
-> X. Hu et al., "GazPNE2: A general place name extractor for microblogs fusing gazetteers and pretrained transformer models," in IEEE Internet of Things Journal, doi: 10.1109/JIOT.2022.3150967.
+> @ARTICLE{9711571,
+  author={Hu, Xuke and Zhou, Zhiyong and Sun, Yeran and Kersten, Jens and Klan, Friederike and Fan, Hongchao and Wiegmann, Matti},
+  journal={IEEE Internet of Things Journal}, 
+  title={GazPNE2: A general place name extractor for microblogs fusing gazetteers and pretrained transformer models}, 
+  year={2022},
+  volume={},
+  number={},
+  pages={1-1},
+  doi={10.1109/JIOT.2022.3150967}}
+
 
 
 ## Contact
