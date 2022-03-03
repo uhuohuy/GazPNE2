@@ -5,6 +5,7 @@ Created on Mon Oct 12 17:03:40 2020
 
 @author: hu_xk
 """
+import json
 import os
 import sys
 from datetime import datetime
@@ -60,6 +61,8 @@ class GazPNE2:
             for i, char in enumerate(key):
                     new_abv += char + '.'
             self.abv_punk[new_abv]=key
+            self.abv_punk[new_abv[0:len(new_abv)-1]]=key
+
         #load the osm place names
         del sim_abv
         start_time = time.time()
@@ -67,8 +70,10 @@ class GazPNE2:
         if osm:
     #        if args.F1 == 4:
             self.osm_names = load_osm_names_fre1('model/'+str(model_ID)+str(epoch)+'.txt', [], aug_count = 1)
+
             self.osm_names = [item for item in self.osm_names]
             self.osm_names = set(self.osm_names)
+            
             # del osm_names
     #        else:
     #            osm_names = load_osm_names_fre('data/country.txt', [], aug_count = 1)
@@ -84,11 +89,25 @@ class GazPNE2:
                 general_place_list = load_osm_names_fre(general_file, [], aug_count = 1)
             else:
                 general_place_list = []
+            # import pdb
+            # pdb.set_trace()
             for word in prefix_places_words:
                 general_place_list.append(tuple([word.lower()]))
+
+            # short_file = 'data/short_names.txt'
+            # if os.path.isfile(short_file):
+            #     self.short_names = load_osm_names_fre1(short_file, [], aug_count = 1)
+            # else:
+            self.short_names = []
+
+            # for place in short_names:
+            #     if len(place)==1:
+            #         general_place_list.append(place)
+           
             # for word in category_words:
             #     general_place_list.append(tuple([word.lower()]))
             general_place_list = list(set(general_place_list))
+            # print('jim', tuple(['jim','hogg']) in general_place_list)
             # candidate_file = 'data/candidates'+str(args.general_words)+'.txt'
             # if os.path.isfile(candidate_file):
             #     candidate_words = load_osm_names_fre(candidate_file, [], aug_count = 1)
@@ -115,8 +134,8 @@ class GazPNE2:
             self.gaz_emb_dim = 0
         # general_words = list(set(general_words).difference(set(category_words_tuple)))
         self.general_words = general_place_list
-        self.general_words.extend(['0','00','000','0000'])
-        self.general_words = list(set(self.general_words).difference(set([tuple(['s'])])))
+        self.general_words.append(tuple(['n']))
+        # self.general_words = list(set(self.general_words).difference(set([tuple(['s'])])))
         # print(general_words)
         file_name = 'data/osm_abbreviations_globe.csv'
         self.abbr_dict = abbrevison1(file_name)
@@ -287,7 +306,7 @@ class GazPNE2:
                 
         return ent_prob, ent_prob_gen,descs
     
-    def extract_location(self,strings,thres=0.75,region=-2,\
+    def extract_location(self,strings,thres=0.8,region=-2,\
            special_con_t=0.2, abb_ent_thres=0.3, context_thres=0.3, \
             weight=1,bool_fast=1, special_ent_t=0.5, \
              merge_thres=0.5,\
@@ -296,7 +315,7 @@ class GazPNE2:
             single_person_c_t=0.23,bool_debug=0,bool_formal=0):
         time_str = datetime.now().strftime('%m%d%H%M%S')
         
-        F1, P,R, detection_results = place_tagging(0, time_str,self,thres,100,\
+        F1, P,R, detection_results,_,_,_ = place_tagging(0, time_str,self,thres,100,\
            special_con_t, abb_ent_thres, context_thres, \
             weight,bool_fast, special_ent_t, \
              merge_thres,\
@@ -310,26 +329,26 @@ def main():
     parser = argparse.ArgumentParser(description='manual to this script')
     parser.add_argument('--id', type=str, default='0212095453')#'0205004732' '0622143005'
     parser.add_argument('--osmembed', type=int, default= 7)
-    parser.add_argument('--thres1', type=float, default= 0.8) #0.7
+    parser.add_argument('--thres', type=float, default= 0.8) #0.7
     parser.add_argument('--filter_l', type=int, default= 1)
     parser.add_argument('--bool_osm', type=int, default= 0)
     parser.add_argument('--hc', type=int, default= 1)
     parser.add_argument('--emb', type=int, default= 1)
     parser.add_argument('--cnn', type=int, default= 150)
     parser.add_argument('--lstm', type=int, default= 150)
-    parser.add_argument('--special_con_t', type=float, default= 0.2)
+    parser.add_argument('--special_con_t', type=float, default= 0.15)
     parser.add_argument('--input', type=int, default= 4)
     parser.add_argument('--input_file', type=str, default= 'test.txt')
     parser.add_argument('--epoch', type=int, default= 0)  #4
-    parser.add_argument('--abb_ent_thres', type=float, default= 0.3)
+    parser.add_argument('--abb_ent_thres', type=float, default= 0.6)
     parser.add_argument('--context_thres', type=float, default= 0.3)
     parser.add_argument('--abb_context_thres', type=float, default= 0.2)
-    parser.add_argument('--num_context_thres', type=float, default= 0.2)
-    parser.add_argument('--single_person_c_t', type=float, default= 0.23)
+    parser.add_argument('--num_context_thres', type=float, default= 0.15)
+    parser.add_argument('--single_person_c_t', type=float, default= 0.2)
     parser.add_argument('--osm', type=int, default= 1)
     parser.add_argument('--weight', type=int, default= 1)
     parser.add_argument('--bool_fast', type=int, default= 1)
-    parser.add_argument('--special_ent_t', type=float, default= 0.5)
+    parser.add_argument('--special_ent_t', type=float, default= 0.4)
     parser.add_argument('--bool_general_check', type=int, default= 1)
     parser.add_argument('--general_words', type=int, default= 26000)
     parser.add_argument('--merge_thres', type=float, default= 0.5)
@@ -347,7 +366,7 @@ def main():
     args = parser.parse_args()
     if args.bool_debug:
         print ('id: '+str(args.id))
-        print ('thres: '+str(args.thres1))
+        print ('thres: '+str(args.thres))
         print ('filter_l: '+str(args.filter_l))
         print ('emb: '+str(args.emb))
         print ('cnn: '+str(args.cnn))
@@ -380,7 +399,7 @@ def main():
         print ('hc: '+str(args.hc))
         print ('bool_fix_hc: '+str(args.bool_fix_hc))
 
-    start_time = time.time()
+    first_start_time = time.time()
     print('model is loading...')
     gazpne2 = GazPNE2(args.id,args.epoch, args.lstm, args.filter_l, args.osm, args.osmembed, args.bool_general_check, \
                       args.general_words, args.emb, args.bool_osm, args.dic_neig, args.con_neig, \
@@ -423,12 +442,15 @@ def main():
     elif args.input == 14:
         regions=[59]
     else:
-        regions = [15,26,28,25,6,7,0,1,2,9,10,20, 21, 8,17,11,12,13,14]
+        regions = [15,1,25,26,28,23,22,0,6,7,2,9,10,20, 21, 8,17,11,12,13,14,30,31,32,-2,-3,-4]
     start_time = time.time()
 
     # print('load_osm_names_fre', time.time()-start_time)
     # print(general_place_list)
     # Write each dataframe to a different worksheet.
+    total_TP = 0
+    total_FP = 0
+    total_FN = 0
     for file in os.listdir("model/"):
         if args.id in file and '.pkl' in file:
             if 'clstm' in file:
@@ -445,14 +467,31 @@ def main():
             # print('epoch:'+str(epoch))
             if epoch == args.epoch:
                 for r_idx, region in enumerate(regions):
-                    F1, P,R, detection_results = place_tagging(int(args.input == 1), time_str,gazpne2,args.thres1,region,\
+                    F1, P,R, detection_results,TP_count,FP_count,FN_count = place_tagging(int(args.input == 1), time_str,gazpne2,args.thres,region,\
                                args.special_con_t, args.abb_ent_thres, args.context_thres, \
                                 args.weight,args.bool_fast, args.special_ent_t, \
                                  args.merge_thres,\
                                 args.fc_ratio,args.input_file,\
                                 args.abb_context_thres, args.num_context_thres, \
                                 args.single_person_c_t,args.bool_debug,args.bool_formal)
-                    print('region '+ str(region)+' : F1 ' + str(F1)+' : thres ' + str(args.thres1))
+                    total_TP = total_TP + TP_count
+                    total_FP = total_FP + FP_count
+                    total_FN = total_FN + FN_count
+                    f = open('experiments/'+time_str+'region'+str(region)+".json", "w")
+                    # import pdb
+                    # pdb.set_trace()
+                    json.dump(detection_results, f)
+                    f.close()
+                    print('region '+ str(region)+' : F1 ' + str(F1)+' : thres ' + str(args.thres))
 #    writer.save()
+    print(total_TP,total_FP,total_FN)
+    try:
+        P = total_TP/(total_TP+total_FP) 
+        R = total_TP/(total_TP+total_FN) 
+        F = (2*P*R) / (P+R)
+        print(P,R,F)
+    except BaseException as e:    
+        print(total_TP)
+    print('total time:',time.time()-first_start_time)
 if __name__ == '__main__':
     main()

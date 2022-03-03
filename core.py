@@ -272,7 +272,7 @@ def replace_words(sub_output,sub_off_set,return_query_tokens):
         if not bool_matched:
             new_return.append(subsuboff)
     return new_return
-
+        # print("match", count, match.group(), "start index", match.start(), "End index", match.end())    
 def extract_sim(tweet, keys, full=0, abb_dict={}):
     '''Extracts all location names from a tweet.'''
     new_tweet = ""
@@ -285,6 +285,10 @@ def extract_sim(tweet, keys, full=0, abb_dict={}):
     tweet = new_tweet
     url_offsets = []
     tweet = strip_non_ascii(tweet)
+    mention_offests = mention_locations(tweet) 
+
+    # import pdb
+    # pdb.set_trace()
     iter = re.finditer(url_re, tweet)
 #p = re.compile("[a-z]")
 #    for m in re..finditer('a1b2c3d4'):
@@ -298,14 +302,20 @@ def extract_sim(tweet, keys, full=0, abb_dict={}):
     preprocessed_query = preprocess_tweet(query, keys, remove_men)
 #    pdb.set_trace()
     # print(preprocessed_query)
+    # import pdb
+    # pdb.set_trace()
+
     if remove_men:
 #    print(preprocessed_query)c
         query_tokens = align_and_split(query, preprocessed_query)
     else:
         new_preprocessed_query = re.sub(mentions_re, " @ ", preprocessed_query)
-#        pdb.set_trace()
+        # pdb.set_trace()
+        end_str = ' HHHXXXKKK'
+        new_preprocessed_query += end_str
         query_tokens = align_and_split(query, new_preprocessed_query)
         query_tokens = [item for item in query_tokens if item[0] not in genitive_case]
+        preprocessed_query += end_str
         ori_query_tokens = align_and_split(query, preprocessed_query)
 #        for url in url_offsets:
 #            for off_i in range(len(ori_query_tokens)):
@@ -537,6 +547,8 @@ def extract_sim(tweet, keys, full=0, abb_dict={}):
         if new_output:
             sub_output.append(new_output)
             sub_off_set.append(new_offset_out)
+    # print(sub_output)
+    # print(sub_off_set)
     if full:
         return_query_tokens = replace_words(sub_output,sub_off_set,return_query_tokens)
         return sub_output,sub_off_set,return_query_tokens, hashtag_offsets,dis_split
@@ -545,7 +557,6 @@ def extract_sim(tweet, keys, full=0, abb_dict={}):
 
 if __name__== "__main__":
     file_name = 'data/osm_abbreviations_globe.csv'
-        
     sim_abv = abbrevison1(file_name)
     abv_punk = {}
     for key in sim_abv.keys():
@@ -553,10 +564,13 @@ if __name__== "__main__":
         for i, char in enumerate(key):
                 new_abv += char + '.'
         abv_punk[new_abv]=key
-    String = "Oh @and they've made a Facebook now if you search ... West St Recovery , you can help get underserved populations back on their feet . harve"
+        abv_punk[new_abv[0:len(new_abv)-1]]=key
+    # import pdb
+    # pdb.set_trace()
+    String = "nigga @mistagoodbar & any other peeps in Houston.  be safe y'all. #houstonflood"
     # String='Packed beaches   in MA = 2nd wave of Covid-19 should start in about 2 weeks in Massachusetts...'
     sub_output,sub_off_set,return_query_tokens, hashtag_offsets,dis_split = extract_sim(String,[], 1, abv_punk)
-    print(return_query_tokens) #sub_output,sub_off_set, return_query_tokens, hashtag_offsets,dis_split)
+    print(mention_offests) #sub_output,sub_off_set, return_query_tokens, hashtag_offsets,dis_split)
     
     # sentence = "IMAGES Showing the destroyed Trout Street Restaurants close to Back Porch . PortAransas Texas HurricaneHarvey"
     # words = nltk.word_tokenize(sentence) 

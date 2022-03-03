@@ -9,26 +9,26 @@ from collections import OrderedDict
 PERSON_POS_ADV = ['^','NNP','NNPS']
 long_places_pos = ['^','$','CD','NNP','NNPS']
 #'spring', 'ottawa',
-category_words = ['mt',  'spur', 'pwy', 'stn', 'hollow', 'hkb', 'farm', 'riv', 'mdws',  'pond', 'hill', 'highway', 'hall', 'airport', 'canal', '\
-vsta', 'plz', 'aprt', 'pkwy', 'cen', 'md', 'temple', 'pnt', 'vy', 'mnr', 'beck', 'flat', 'tce', 'bch', 'crt', 'lake', 'av', 'blvd', 'reservoir', \
-'canyon', 'lk', 'terrace', 'beach', 'crescent', 'dr', 'crk', 'academy', 'street', 'bri', 'centre', 'co', 'hwy', 'range', 'bdge', 'lane',\
-'ridge', 'nw', 'pl', 'lower',  'island', 'club', 'gr', 'ranch', 'ldg', 'upr', 'colony', 'court', 'west', 'upper', 'grange', \
-'northeast', 'bay', 'fd', 'field', 'cir', 'southwest', 'ms', 'manor', 'crss', 'gte', 'south', 'boulevard', 'cove', 'cottage', 'ri', 'gdn', 'rd', \
-'croft', 'road', 'cft', 'trl', 'grove', 'lr', 'city', 'br', 'hospital', 'link', 'ln', 'trail', 'park', 'crest', 'state', 'chase', 'top', 'market', 'university',\
- 'se', 'cr', 'mtn', 'northwest', 'brook', 'cres', 'wy', 'vst', 'tn', 'pe', 'pt', 'np', 'gn', 'dale', 'lwr', 'mountain', 'haven', 'bank', \
- 'pike', 'rue', 'vista', 'vill', 'meadow', 'shwy', 'comm', 'circle', 'mh', 'north', 'college', 'school', 'mdw', 'parkway', 'brk', 'sth', \
- 'res', 'station', 'cott', 'rvr', 'rdg', 'lodge', 'hl', 'cs', 'vw', 'oak', 'rge', 'cx', 'gln', 'cv', 'branch', 'plza', 'river', 'knoll', 'lough', \
- 'bvd', 'cross', 'pk', 'dle', 'uni', 'wood', 'village', 'ct', 'sw', 'bluff', 'cov', 'ter', 'church', 'sta', 'st', 'bridge', 'plaza', 'gra', \
- 'southeast', 'rdge', 'ck', 'center', 'loop', 'east', 'town', 'ne', 'view', 'county', 'twp', 'brdg', 'city', 'ave', 'rnge', 'forest', 'mill',\
- 'point', 'woods', 'hs', 'cty', 'mesa', 'pky', 'hvn', 'green', 'division', 'glen', 'grn', 'rock', 'vale', 'sh', 'township', 'crst', 'meadows',\
- 'place', 'creek', 'gro', 'key', 'water', 'univer', 'lp', 'mount', 'mkt',  'hosp', 'terr', 'cst', 'ctr', 'garden', 'tr', 'univ', 'mall' 'orchard', \
- 'avenue', 'ch', 'valley', 'hotel','zoo', 'roads','streets','rivers','area', 'sea','city','town','ph', 'roads', 'parks','countries','southern',\
- 'northern','house','home','northeast','eastern','stream','streams','bayou', 'amp', 'plains', 'river','south','nw','december','november','september','october',\
- 'january','february','march','april','may','june','july','august','jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec', 'nb','eb','sb','wb','westbound','northbound','eastbound','southbound']
+category_words = [ 'spur',  'hollow',  'farm', 'mdws',  'pond', 'hill', 'highway', 'hall', 'airport', 'canal', '\
+vsta', 'aprt', 'pkwy', 'temple',  'beck', 'flat',  'lake',  'blvd', 'reservoir', \
+'canyon', 'terrace', 'beach', 'crescent',  'academy', 'street',  'centre',  'range', 'bdge', 'lane',\
+'ridge', 'lower',  'island', 'club', 'ranch',  'colony', 'court', 'west', 'upper', 'grange', \
+'northeast',  'field',  'southwest',  'manor', 'crss', 'gte', 'south', 'boulevard', 'cove', 'cottage',  \
+'croft', 'road', 'grove', 'city',  'hospital', 'link',  'trail', 'park', 'crest', 'state', 'chase', 'top', 'market', 'university',\
+'northwest', 'brook', 'cres', 'dale', 'lwr', 'mountain', 'haven', 'bank', \
+ 'pike', 'vista', 'vill', 'meadow', 'shwy', 'comm', 'circle',  'north', 'college', 'school', 'parkway', \
+ 'station', 'center', 'centre' 'cott', 'lodge',  'branch', 'plza', 'river', 'knoll', 'lough', \
+ 'cross',   'wood', 'village',  'bluff',  'church', 'bridge', 'plaza', \
+ 'southeast', 'rdge',  'center', 'loop', 'east', 'town',  'view', 'county',  'brdg', 'city', 'rnge', 'forest', 'mill',\
+ 'point', 'woods',  'mesa',  'green', 'division', 'glen', 'rock', 'vale', 'township', 'crst', 'meadows',\
+ 'place', 'creek',  'water', 'univer', 'mount',  'hosp', 'terr', 'garden', 'univ', 'mall' 'orchard', \
+ 'avenue',  'valley', 'hotel','zoo', 'roads','streets','rivers','area', 'sea','city','town','roads', 'parks','countries','southern',\
+ 'northern','house','home','northeast','eastern','stream','streams','bayou', 'amp', 'plains', 'river','south','nw','nb','eb','sb','wb','westbound','northbound','eastbound','southbound']
 prefix_places_words = ['west','north','east','south','northeast','southeast','northwest','southwest','central','northern','southern','eastern','western'\
                        'w','e','s','ne','se','nw','sw','northeastern','southeastern','northwestern','southwestern','eb','sb','wb','nb','eastbound','southbound','westbound','northbound']
-lastfix_places_words = ['eb','sb','wb','nb','eastbound','southbound','westbound','northbound']
-
+lastfix_places_words = prefix_places_words; #['eb','sb','wb','nb','eastbound','southbound','westbound','northbound']
+categories = category_words
+categories.extend(prefix_places_words)
 def read_terms(terms_file):
     terms_dict = OrderedDict()
     with open(terms_file) as fin:
@@ -286,6 +286,7 @@ def interset_num(list1,list2,detected_place_names,place_names,  \
                  ignored_place_names, amb_place_offset=[], amb_place_names=[], hashtag_offsets=[]):
     TP = 0
     FP = 0
+    FN_s = 0
     FN_list = [1]*len(place_names)
     place_detect_score = [0]*len(place_names)
     for i, l1 in enumerate(list1):
@@ -310,13 +311,17 @@ def interset_num(list1,list2,detected_place_names,place_names,  \
                     bool_ins = True
                 else:
                     if (l1[0] >= l[0] and l1[0] <= l[1]) or (l1[1] >= l[0] and l1[1] <= l[1]) or (l[0] >= l1[0] and l[0] <= l1[1]) or (l[1] >= l1[0] and l[1] <= l1[1]):
+                        # import pdb
+                        # pdb.set_trace()
                         pen = interset_adv(list(detected_place_names[i]),list(place_names[j]))
                         if pen != 1:
                             pen = 0.5
                         else:
                             TP += pen
                         FP += (1-pen)
-                        FN_list[j] = (1-pen)
+                        FN_list[j] = 0
+                        if pen != 1:
+                            FN_s += 0.5
                         place_detect_score[j] = pen  
                         bool_ins = True
         if not bool_ins:
@@ -346,7 +351,7 @@ def interset_num(list1,list2,detected_place_names,place_names,  \
 
             if not bool_changed:
                 FP += 1
-    return TP,FP,sum(FN_list), place_detect_score
+    return TP,FP,sum(FN_list)+FN_s, place_detect_score
 
 def extract_place(pd_item):
     return_places = []
@@ -408,6 +413,11 @@ def abbrevison(abr_file):
                 abbr[row[1]] = tokens[0] 
     return abbr
 
+def mention_locations(target_string):
+    mention_offsets = []
+    for match in re.finditer(r'@([a-zA-Z0-9]{1,15})', target_string):
+        mention_offsets.append((match.start(),match.end()-1))
+    return mention_offsets
 
 '''to judege if a string contains numbers'''
 def hasNumbers(inputString):
