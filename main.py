@@ -307,11 +307,11 @@ class GazPNE2:
         return ent_prob, ent_prob_gen,descs
     
     def extract_location(self,strings,thres=0.8,region=-2,\
-           special_con_t=0.2, abb_ent_thres=0.3, context_thres=0.3, \
-            weight=1,bool_fast=1, special_ent_t=0.5, \
+           special_con_t=0.15, abb_ent_thres=0.6, context_thres=0.3, \
+            weight=1,bool_fast=1, special_ent_t=0.4, \
              merge_thres=0.5,\
             fc_ratio=0.25,input_file='test.txt',\
-            abb_context_thres=0.2, num_context_thres=0.2, \
+            abb_context_thres=0.2, num_context_thres=0.15, \
             single_person_c_t=0.23,bool_debug=0,bool_formal=0):
         time_str = datetime.now().strftime('%m%d%H%M%S')
         
