@@ -23,7 +23,9 @@ Download the trained [model](https://drive.google.com/file/d/1j4CSF13Uoajcfh1h-y
 ### Install python dependencies
 Python 3.7 is required
 > conda create -n gazpne2 python=3.7
+
 > conda activate gazpne2
+
 > pip install -r requirements.txt
 
 ### Download pretrained BERTweet model
