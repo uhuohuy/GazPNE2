@@ -20,8 +20,8 @@ The data we used to evaluate our approach is as follows:
 ### Prepare model data
 Download the trained [model](https://drive.google.com/file/d/1j4CSF13Uoajcfh1h-yBuvVXo_-rub05o/view?usp=sharing) and unzip the files into the _model_ folder.
 
-### Install python dependencies
-Python 3.7 is required
+### Install
+Java and Python 3.7 is required
 > conda create -n gazpne2 python=3.7
 
 > conda activate gazpne2
