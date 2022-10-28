@@ -54,6 +54,10 @@ print(locations)
 {'LOC': 'Rockport', 'offset': (0, 7)}, {'LOC': 'TX', 'offset': (9, 10)}, {'LOC': 'houston', 'offset': (78, 84)}]}
 '''
 ```
+Execute the command below in case of a jave error.  
+
+> spack load openjdk
+
 
 To extract locations from txt file, execute the following command. In the txt file, each line corresponds to a tweet message.
 
