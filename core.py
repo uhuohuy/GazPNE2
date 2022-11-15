@@ -12,12 +12,12 @@ from itertools import groupby
 from wordsegment import load, segment
 from operator import itemgetter
 from collections import defaultdict
-from spellchecker import SpellChecker
+#from spellchecker import SpellChecker
 from utility import *
 import copy
 import pdb
 load()
-spell = SpellChecker()
+#spell = SpellChecker()
 
 import Twokenize
 
