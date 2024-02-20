@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 12 17:03:40 2020
-
-@author: hu_xk
-"""
 import json
 import os
 import sys
