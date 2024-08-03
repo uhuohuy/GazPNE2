@@ -77,3 +77,20 @@ datasets [a,b,c]  can be obtained from https://rebrand.ly/LocationsDataset.
 datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-open-dataset/.
 
 datasets [g,h] can be obtained by contacting the [author](https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
+
+# Citation
+
+If you use the code, please cite the following publication:
+
+```bibtex
+@article{hu2022gazpne2,
+  title={GazPNE2: A general place name extractor for microblogs fusing gazetteers and pretrained transformer models},
+  author={Hu, Xuke and Zhou, Zhiyong and Sun, Yeran and Kersten, Jens and Klan, Friederike and Fan, Hongchao and Wiegmann, Matti},
+  journal={IEEE Internet of Things Journal},
+  volume={9},
+  number={17},
+  pages={16259--16271},
+  year={2022},
+  publisher={IEEE}
+}
+```
