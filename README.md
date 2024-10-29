@@ -78,7 +78,7 @@ datasets [e,f] can be obtained from https://revealproject.eu/geoparse-benchmark-
 
 datasets [g,h] can be obtained by contacting the [author](https://www.researchgate.net/publication/342550989_Knowledge-based_rules_for_the_extraction_of_complex_fine-grained_locative_references_from_tweets) of the data.
 
-# Citation
+## Citation
 
 If you use the code, please cite the following publication:
 
